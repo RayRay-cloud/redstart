@@ -739,6 +739,46 @@ def _(mo):
     return
 
 
+@app.function
+def world(view_box, *objects):
+    x_min, x_max, y_min, y_max = view_box
+    
+    w = x_max - x_min
+    h = y_max - y_min
+    scale = 50
+
+    W = w * scale
+    H = h * scale
+
+    def wx(x): return (x - x_min) * scale
+    def wy(y): return (y_max - y) * scale
+
+    sky    = f'<rect x="0" y="0" width="{W}" height="{H}" fill="skyblue"/>'
+    ground = f'<rect x="0" y="{wy(0)}" width="{W}" height="{H - wy(0)}" fill="#8B6914"/>'
+    pad    = f'<rect x="{wx(-1)}" y="{wy(0)}" width="{2*scale}" height="5" fill="lime"/>'
+
+    objects_svg = "".join(str(obj) for obj in objects)
+    flip = f'translate({wx(0)}, {wy(0)}) scale({scale}, {-scale})'
+    objects_group = f'<g transform="{flip}">{objects_svg}</g>'
+
+    return f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}">{sky}{ground}{pad}{objects_group}</svg>'
+
+
+@app.cell
+def _(mo):
+    mo.hstack(
+        [
+            # Display an empty world
+            mo.Html(
+                world([-3, 3, -2, 4])
+            )
+        
+        ],
+    )
+
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
