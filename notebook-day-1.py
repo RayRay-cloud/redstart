@@ -155,6 +155,11 @@ def _(mo):
     return
 
 
+@app.cell
+def _():
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -273,6 +278,11 @@ def _(mo):
     return
 
 
+@app.cell
+def _():
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -299,19 +309,45 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    The dimension n is 6.
+    The dimension is \( n = 6 \).
 
-    The state s is [x, vx, y, vy, theta, omega].
+    The state is:
+    $$
+    s = [x, v_x, y, v_y, \theta, \omega]
+    $$
 
-    omega being the derivative of theta.
+    where \( \omega \) is the derivative of \( \theta \), i.e.:
+    $$
+    \omega = \dot{\theta}
+    $$
 
-    F(s, f, phi) = [vx, ax, vy, ay, omega, omega point ]
+    The system dynamics are:
+    $$
+    F(s, f, \phi) = [v_x, a_x, v_y, a_y, \omega, \dot{\omega}]
+    $$
 
-    where fx = -f sin(theta + phi), fy = f cos(theta + phi)
+    where the forces are defined as:
+    $$
+    f_x = -f \sin(\theta + \phi), \quad f_y = f \cos(\theta + \phi)
+    $$
 
-    F(s, f, phi) = [vx, fx/M, vy, (fy - M g)/M, omega, - (l/2 f sin phi)/J ]
+    Thus,
+    $$
+    F(s, f, \phi) =
+    \begin{bmatrix}
+    v_x \\
+    \frac{f_x}{M} \\
+    v_y \\
+    \frac{f_y - Mg}{M} \\
+    \omega \\
+    -\frac{l}{2J} f \sin(\phi)
+    \end{bmatrix}
+    $$
 
-    where fx = -f sin(theta + phi), fy = f cos(theta + phi)
+    and again:
+    $$
+    f_x = -f \sin(\theta + \phi), \quad f_y = f \cos(\theta + \phi)
+    $$
     """)
     return
 
@@ -359,28 +395,21 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    The ODE solver expects `dy/dt`. Since our state is `[x, vx, y, vy, theta, omega]`, the derivatives are `[vx, ax, vy, ay, omega, alpha]` — velocities are the derivatives of positions, and accelerations are the derivatives of velocities.
+    $F$ encodes the right-hand side of the ODE:
 
-    ---
+    $$\dot{s} = F(s,\ f,\ \phi)$$
 
-    ## Numerical Integration
+    Expanding $\dot{s}$ component by component:
 
-    ```python
-    sol = sci.solve_ivp(
-        rhs,
-        t_span,
-        y0,
-        dense_output=True,
-        max_step=0.01,
-    )
-    return sol.sol
-    ```
+    $$\dot{s} = \frac{d}{dt}\begin{pmatrix} x \\ v_x \\ y \\ v_y \\ \theta \\ \omega \end{pmatrix} = \begin{pmatrix} \dot{x} \\ \dot{v}_x \\ \dot{y} \\ \dot{v}_y \\ \dot{\theta} \\ \dot{\omega} \end{pmatrix} = F(s,\ f,\ \phi) = \begin{pmatrix} v_x \\[4pt] -\dfrac{f}{M}\sin(\theta + \phi) \\[8pt] v_y \\[4pt] \dfrac{f\cos(\theta+\phi)}{M} - g \\[8pt] \omega \\[4pt] -\dfrac{l}{2J}\,f\sin(\phi) \end{pmatrix}$$
 
-    `scipy.integrate.solve_ivp` is SciPy's general-purpose IVP (Initial Value Problem) solver.
+    The first and third rows follow directly from the definitions $v_x = \dot{x}$ and $v_y = \dot{y}$. The second and fourth rows are Newton's second law $\dot{v} = F/M$, with thrust decomposed into horizontal and vertical components and gravity subtracted vertically. The fifth row follows from $\omega = \dot{\theta}$. The sixth is the rotational equivalent of Newton's second law, $\dot{\omega} = \tau / J$.
 
-    - **`dense_output=True`**  :instead of returning values only at discrete grid points, this produces a **continuous interpolating function** `sol.sol(t)`. You can query the trajectory at any time `t` in the span, not just the solver's internal steps.
-    - **`max_step=0.01`** :caps the integration step size at 10 ms, ensuring the solver doesn't take large leaps that would miss fast dynamics (like a rapid rotation or a sharp control input).
-    The function returns `sol.sol`, a callable `t → [x, vx, y, vy, theta, omega]` that gives you the full state of the rocket at any moment.
+    $F$ returns exactly this vector, and `solve_ivp` integrates $\dot{s} = F(s, f, \phi)$ forward step by step to build the full trajectory.
+
+    - **`dense_output=True`**  :instead of returning values only at discrete grid points, this produces a **continuous interpolating function** `sol.sol(t)`.
+    - **`max_step=0.01`** :caps the integration step size at 10 ms.
+    The function returns `sol.sol`, a callable `t → [x, vx, y, vy, theta, omega]` that gives the full state of the rocket at any moment.
 
     ---
     """)
