@@ -98,8 +98,7 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ## Constants 1
-
+    ## Constants
 
     For the sake of simplicity (this is merely a toy model!) in the sequel we assume that:
 
@@ -170,7 +169,7 @@ def _(np):
     phi=0;
     f=0;
     fx=-f*np.sin(theta+phi)
-    fy=-f*np.cos(theta+phi)
+    fy=f*np.cos(theta+phi)
     return
 
 
