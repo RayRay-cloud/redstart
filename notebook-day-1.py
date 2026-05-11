@@ -742,7 +742,7 @@ def _(mo):
 @app.function
 def world(view_box, *objects):
     x_min, x_max, y_min, y_max = view_box
-    
+
     w = x_max - x_min
     h = y_max - y_min
     scale = 50
@@ -944,6 +944,116 @@ def _(mo):
 
     4. The "controlled landing" scenario (see above).
     """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Notre fonction controlled-landing ne prend pas de paramètres pour les conditions initiales, donc l'animation ci-dessous marche pour les conditions précédentes.
+    """)
+    return
+
+
+@app.cell
+def _(M, g, l, mo, np, plt, redstart_solve):
+    import matplotlib.patches as patches
+    import matplotlib.animation as animation
+    from matplotlib.transforms import Affine2D
+
+    T   = 5.0
+    fps = 20
+
+    y0_anim = [0.0, 0.0, 10.0, -2.0, 0.0, 0.0]
+
+    c_coef = -2.0
+    d_coef = 10.0
+    A_coef = np.array([[125.0, 25.0], [75.0, 10.0]])
+    b_coef = np.array([1.0 - 5*c_coef - d_coef, 0.0 - c_coef])
+    a_coef, b_coef2 = np.linalg.solve(A_coef, b_coef)
+
+    def f_phi_anim(t, s):
+        yddot = 6*a_coef*t + 2*b_coef2
+        return [max(0.0, M*(yddot + g)), 0.0]
+
+    sol_anim  = redstart_solve([0.0, T], y0_anim, f_phi_anim)
+    times_gif = np.linspace(0, T, int(T * fps) + 1)
+
+    states_gif = []
+    for t_i in times_gif:
+        s_i      = sol_anim(t_i)
+        fi, phii = f_phi_anim(t_i, s_i)
+        states_gif.append({
+            't': t_i,
+            'x': float(s_i[0]),
+            'y': float(s_i[2]),
+            'theta': float(s_i[4]),
+            'f': float(fi),
+            'phi': float(phii),
+        })
+
+    fig_gif, ax_gif = plt.subplots(figsize=(4, 7))
+    ax_gif.set_xlim(-2, 2)
+    ax_gif.set_ylim(-0.5, 11)
+    ax_gif.set_aspect('equal')
+    ax_gif.axis('off')
+
+    ax_gif.add_patch(patches.Rectangle((-2, -0.5), 4, 12,   color='skyblue', zorder=0))
+    ax_gif.add_patch(patches.Rectangle((-2, -0.5), 4,  0.5, color='#8B6914', zorder=1))
+    ax_gif.add_patch(patches.Rectangle((-1,  0.0), 2,  0.1, color='lime',    zorder=2))
+
+    body_w_g  = l / 5
+    body_h_g  = l
+    flame_w_g = l / 5
+
+    body_p = patches.Rectangle(
+        (-body_w_g/2, -body_h_g/2), body_w_g, body_h_g,
+        color='black', zorder=5
+    )
+    ax_gif.add_patch(body_p)
+
+    flame_p = patches.Rectangle(
+        (-flame_w_g/2, 0), flame_w_g, 0.001,
+        color='red', zorder=4
+    )
+    ax_gif.add_patch(flame_p)
+
+    info_txt = ax_gif.text(-1.8, 10.5, '', fontsize=8, color='black', zorder=6)
+
+    def update_gif(frame):
+        st          = states_gif[frame]
+        x, y, theta = st['x'], st['y'], st['theta']
+        f, phi      = st['f'], st['phi']
+        flame_len   = (l/2) * (f / (M*g)) if f > 0 else 0.001
+
+        tb = (Affine2D().rotate(-theta).translate(x, y) + ax_gif.transData)
+        body_p.set_transform(tb)
+
+        flame_p.set_height(flame_len)
+        flame_p.set_width(flame_w_g)
+        flame_p.set_xy((-flame_w_g/2, -(body_h_g/2 + flame_len)))
+        tf = (Affine2D()
+              .rotate_around(0, -body_h_g/2, -phi)
+              .rotate_around(0, 0, -theta)
+              .translate(x, y)
+              + ax_gif.transData)
+        flame_p.set_transform(tf)
+
+        info_txt.set_text(f't={st["t"]:.1f}s  y={y:.2f}m  f={f:.2f}N')
+        return body_p, flame_p, info_txt
+
+    ani_gif = animation.FuncAnimation(
+        fig_gif, update_gif,
+        frames=len(states_gif),
+        interval=1000/fps,
+        blit=True,
+        repeat=True,
+    )
+
+    ani_gif.save("/tmp/landing2.gif", writer="pillow", fps=fps)
+    plt.close(fig_gif)
+
+    mo.image(src="/tmp/landing2.gif")
     return
 
 
