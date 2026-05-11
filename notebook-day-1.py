@@ -71,7 +71,8 @@ def _():
     import numpy as np
     import numpy.linalg as la
 
-    return
+
+    return (np,)
 
 
 @app.cell(hide_code=True)
@@ -131,10 +132,44 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    L'énoncé indique les deux constantes correspondant à la masse et à la longueur du booster. La constante gravitationelle aussi.
+    """)
+    return
+
+
+@app.cell
+def _():
+    g=10
+    M=1.0
+    l=2.0
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## 🧩 Forces
 
     Compute the cartesian coordinates $f_x$ and $f_y$ of the force applied to the booster by the reactor, functions of $f$, $\theta$ and $\phi$.
     """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    En projetant la force appliquée par le réacteur sur le booster selon le même schéma fourni, et en considérant un repère cartésien tel que x l'horizontale et y la verticale, on obtient les projections suivantes:
+    """)
+    return
+
+
+@app.cell
+def _(np):
+    theta=0;
+    phi=0;
+    f=0;
+    fx=-f*np.sin(theta+phi)
+    fy=-f*np.cos(theta+phi)
     return
 
 
