@@ -1064,5 +1064,106 @@ def _(M, g, l, mo, np, plt, redstart_solve):
     return
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Définition de nouvelles fonctions, cette fois paramétrées.
+    """)
+    return
+
+
+@app.cell
+def _(M, g, l, np, plt, redstart_solve):
+    def controled_landing(x0, vx0, y0_init, vy0, theta0, omega0, phi_control):
+
+        d = y0_init
+        c = vy0
+
+        A = np.array([[125, 25],
+                      [75,  10]])
+
+        b_vec = np.array([1 - 5*c - d, -c])
+        a, b = np.linalg.solve(A, b_vec)
+
+        def f_control(t):
+            yddot = 6*a*t + 2*b
+            return M * (yddot + g)
+
+        t_span = [0.0, 5.0]
+
+        y0 = [x0, vx0, y0_init, vy0, theta0, omega0]
+
+        def f_phi(t, y):
+            return np.array([f_control(t), phi_control])
+
+        sol = redstart_solve(t_span, y0, f_phi)
+
+        t = np.linspace(0, 5, 1000)
+        Y = sol(t)
+
+        plt.figure(figsize=(12,6))
+
+        # x(t)
+        plt.subplot(2, 3, 1)
+        plt.plot(t, Y[0], label=r"$x(t)$")
+        plt.axhline(0, color="grey", ls="--")
+        plt.title("x(t)")
+        plt.grid(True)
+        plt.legend()
+
+        # vx(t)
+        plt.subplot(2, 3, 2)
+        plt.plot(t, Y[1], label=r"$\dot{x}(t)$", color="orange")
+        plt.axhline(0, color="grey", ls="--")
+        plt.title("vx(t)")
+        plt.grid(True)
+        plt.legend()
+
+        # y(t)
+        plt.subplot(2, 3, 3)
+        plt.plot(t, Y[2], label=r"$y(t)$", color="blue")
+        plt.axhline(l/2, color="grey", ls="--", label=r"$y=\ell/2$")
+        plt.title("y(t)")
+        plt.grid(True)
+        plt.legend()
+
+        # vy(t)
+        plt.subplot(2, 3, 4)
+        plt.plot(t, Y[3], label=r"$\dot{y}(t)$", color="green")
+        plt.axhline(0, color="grey", ls="--")
+        plt.title("vy(t)")
+        plt.grid(True)
+        plt.legend()
+
+        # theta(t)
+        plt.subplot(2, 3, 5)
+        plt.plot(t, Y[4], label=r"$\theta(t)$", color="purple")
+        plt.axhline(0, color="grey", ls="--")
+        plt.title("theta(t)")
+        plt.grid(True)
+        plt.legend()
+
+        # force
+        plt.subplot(2, 3, 6)
+        plt.plot(t, f_control(t), label=r"$f(t)$", color="red")
+        plt.axhline(M*g, color="grey", ls="--")
+        plt.title("f(t)")
+        plt.grid(True)
+        plt.legend()
+
+        plt.suptitle("Controlled Landing", fontsize=14)
+        plt.tight_layout()
+
+        # checks
+        Y_final = sol(5.0)
+        print("y(5) =", Y_final[2], "target:", l/2)
+        print("vy(5) =", Y_final[3], "target:", 0)
+
+        return plt.gcf() 
+    
+    controled_landing(0.0, 0.0, 10.0, -2.0, 0.0, 0.0, 0)
+    return
+
+
 if __name__ == "__main__":
     app.run()
