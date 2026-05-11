@@ -142,7 +142,7 @@ def _():
     g=10
     M=1.0
     l=2.0
-    return
+    return M, g, l
 
 
 @app.cell(hide_code=True)
@@ -170,7 +170,7 @@ def _(np):
     f=0;
     fx=-f*np.sin(theta+phi)
     fy=f*np.cos(theta+phi)
-    return
+    return fx, fy
 
 
 @app.cell(hide_code=True)
@@ -186,10 +186,61 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    En utilisant la deuxième loi de Newton, nous projetons les forces appliquées. Ici les forces considérées sont : le poids P et la force appliquée par le réacteur sur le booster F. Dans ce qui suit, ax représente l'accélération suivant l'axe X et ay représente l'accélération suivant l'axe Y.
+
+    Les équations sont les suivantes :
+
+    \[
+    \ddot{x} = \frac{f_x}{M}, \quad \ddot{y} = \frac{f_y - M g}{M}
+    \]
+    où $f_x = -f \sin(\theta + \phi)$, $f_y = f \cos(\theta + \phi)$
+    """)
+    return
+
+
+@app.cell
+def _(M, fx, fy, g):
+
+
+    # Initialize accelerations to 0
+    ax = 0.0  # ẍ (horizontal acceleration)
+    ay = 0.0  # ÿ (vertical acceleration)
+
+    # Newton's second law F = ma
+    # Horizontal: M·ẍ = fx
+    ax = fx / M                      #  # ẍ = -f·sin(θ + ϕ)
+
+    # Vertical: M·ÿ = fy - Mg
+    ay = (fy - M * g) / M           # ÿ = f·cos(θ + ϕ) - g
+
+
+    # Vertical: M·ÿ = fy - Mg
+    ay = (fy - M * g) / M           # ÿ = f·cos(θ + ϕ) - g
+
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## 🧩 Moment of inertia
 
     Compute the [moment of inertia](https://en.wikipedia.org/wiki/Moment_of_inertia) $J$ of the booster and define the corresponding Python variable `J`.
     """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    The booster is a uniform rod. The center of mass (x, y) is exactly at the middle, so the rod extends ℓ/2 above and ℓ/2 below the center. Total length = ℓ.
+    """)
+    return
+
+
+@app.cell
+def _(M, l):
+    J = (1/12) * M * (2 * l)**2
     return
 
 
