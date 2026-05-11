@@ -216,7 +216,6 @@ def _(M, fx, fy, g):
 
     # Vertical: M·ÿ = fy - Mg
     ay = (fy - M * g) / M           # ÿ = f·cos(θ + ϕ) - g
-
     return
 
 
@@ -298,6 +297,26 @@ def _(mo):
     $$
     \dot{s} = F(s, f, \phi).
     $$
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    The dimension n is 6.
+
+    The state s is [x, vx, y, vy, theta, omega].
+
+    omega being the derivative of theta.
+
+    F(s, f, phi) = [vx, ax, vy, ay, omega, omega point ]
+
+    where fx = -f sin(theta + phi), fy = f cos(theta + phi)
+
+    F(s, f, phi) = [vx, fx/M, vy, (fy - M g)/M, omega, - (l/2 f sin phi)/J ]
+
+    where fx = -f sin(theta + phi), fy = f cos(theta + phi)
     """)
     return
 
