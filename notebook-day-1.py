@@ -72,7 +72,7 @@ def _():
     import numpy.linalg as la
 
 
-    return (np,)
+    return np, sci
 
 
 @app.cell(hide_code=True)
@@ -239,8 +239,8 @@ def _(mo):
 
 @app.cell
 def _(M, l):
-    J = (1/12) * M * (2 * l)**2
-    return
+    J = (1/12) * M * (l)**2
+    return (J,)
 
 
 @app.cell(hide_code=True)
@@ -270,11 +270,6 @@ def _(mo):
 
     $$\dot{\theta} = \omega, \quad \dot{\omega} = -\frac{\ell}{2J} f \sin\phi$$
     """)
-    return
-
-
-@app.cell
-def _():
     return
 
 
@@ -358,6 +353,70 @@ def _(mo):
     free_fall_example()
     ```
     """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    The ODE solver expects `dy/dt`. Since our state is `[x, vx, y, vy, theta, omega]`, the derivatives are `[vx, ax, vy, ay, omega, alpha]` — velocities are the derivatives of positions, and accelerations are the derivatives of velocities.
+
+    ---
+
+    ## Numerical Integration
+
+    ```python
+    sol = sci.solve_ivp(
+        rhs,
+        t_span,
+        y0,
+        dense_output=True,
+        max_step=0.01,
+    )
+    return sol.sol
+    ```
+
+    `scipy.integrate.solve_ivp` is SciPy's general-purpose IVP (Initial Value Problem) solver.
+
+    - **`dense_output=True`**  :instead of returning values only at discrete grid points, this produces a **continuous interpolating function** `sol.sol(t)`. You can query the trajectory at any time `t` in the span, not just the solver's internal steps.
+    - **`max_step=0.01`** :caps the integration step size at 10 ms, ensuring the solver doesn't take large leaps that would miss fast dynamics (like a rapid rotation or a sharp control input).
+    The function returns `sol.sol`, a callable `t → [x, vx, y, vy, theta, omega]` that gives you the full state of the rocket at any moment.
+
+    ---
+    """)
+    return
+
+
+@app.cell
+def _(J, M, g, l, np, sci):
+    def redstart_solve(t_span, y0, f_phi):
+
+        def rhs(t, y):
+            x, vx, y_pos, vy, theta, omega = y
+
+            f, phi = f_phi(t, y)
+
+            fx = -f * np.sin(theta + phi)
+            fy = f * np.cos(theta + phi)
+
+            ax = fx / M
+            ay = (fy - M * g) / M
+
+            torque = -(l / 2) * f * np.sin(phi)
+            alpha = torque / J
+
+            return [vx, ax, vy, ay, omega, alpha]
+
+        sol = sci.solve_ivp(
+            rhs,
+            t_span,
+            y0,
+            dense_output=True,
+            max_step=0.01,
+        )
+
+        return sol.sol
+
     return
 
 
