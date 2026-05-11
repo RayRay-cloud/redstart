@@ -1167,146 +1167,145 @@ def _(M, g, l, np, plt, redstart_solve):
 
 @app.cell
 def _(M, g, l, mo, np, plt, redstart_solve):
-    import matplotlib.patches as patches
-    import matplotlib.animation as animation
-    from matplotlib.transforms import Affine2D
+    def run_all_scenarios():
+        import matplotlib.patches as patches
+        import matplotlib.animation as animation
+        from matplotlib.transforms import Affine2D
 
-    fps = 20
-    T   = 5.0
+        fps = 20
+        T   = 5.0
 
-    # --- build f_phi for each scenario ---
+        y0_init_cl = 10.0
+        vy0_cl     = -2.0
+        d_cl = y0_init_cl
+        c_cl = vy0_cl
+        A_cl = np.array([[125.0, 25.0], [75.0, 10.0]])
+        b_cl = np.array([1 - 5*c_cl - d_cl, -c_cl])
+        a_cl, b_cl2 = np.linalg.solve(A_cl, b_cl)
 
-    # Scenario 4: controlled landing coefficients (y0=10, vy0=-2)
-    y0_init_cl = 10.0
-    vy0_cl     = -2.0
-    d_cl = y0_init_cl
-    c_cl = vy0_cl
-    A_cl = np.array([[125.0, 25.0], [75.0, 10.0]])
-    b_cl = np.array([1 - 5*c_cl - d_cl, -c_cl])
-    a_cl, b_cl2 = np.linalg.solve(A_cl, b_cl)
+        def f_control_cl(t):
+            yddot = 6*a_cl*t + 2*b_cl2
+            return M * (yddot + g)
 
-    def f_control_cl(t):
-        yddot = 6*a_cl*t + 2*b_cl2
-        return M * (yddot + g)
+        scenarios = [
+            (
+                "1 · Free fall\nf=0, φ=0",
+                [0.0, 0.0, 10.0, 0.0, 0.0, 0.0],
+                lambda t, s: [0.0, 0.0],
+            ),
+            (
+                "2 · Hover\nf=Mg, φ=0",
+                [0.0, 0.0, 10.0, 0.0, 0.0, 0.0],
+                lambda t, s: [M * g, 0.0],
+            ),
+            (
+                "3 · Tilt\nf=Mg, φ=π/8",
+                [0.0, 0.0, 10.0, 0.0, 0.0, 0.0],
+                lambda t, s: [M * g, np.pi / 8],
+            ),
+            (
+                "4 · Controlled landing\ny0=10, vy0=-2",
+                [0.0, 0.0, 10.0, -2.0, 0.0, 0.0],
+                lambda t, s: [max(0.0, f_control_cl(t)), 0.0],
+            ),
+        ]
 
-    scenarios = [
-        # (label, y0, f_phi_fn)
-        (
-            "1 · Free fall\nf=0, φ=0",
-            [0.0, 0.0, 10.0, 0.0, 0.0, 0.0],
-            lambda t, s: [0.0, 0.0],
-        ),
-        (
-            "2 · Hover\nf=Mg, φ=0",
-            [0.0, 0.0, 10.0, 0.0, 0.0, 0.0],
-            lambda t, s: [M * g, 0.0],
-        ),
-        (
-            "3 · Tilt\nf=Mg, φ=π/8",
-            [0.0, 0.0, 10.0, 0.0, 0.0, 0.0],
-            lambda t, s: [M * g, np.pi / 8],
-        ),
-        (
-            "4 · Controlled landing\ny0=10, vy0=-2",
-            [0.0, 0.0, 10.0, -2.0, 0.0, 0.0],
-            lambda t, s: [max(0.0, f_control_cl(t)), 0.0],
-        ),
-    ]
+        def make_gif(label, y0_sc, f_phi_fn, filename):
+            sol       = redstart_solve([0.0, T], y0_sc, f_phi_fn)
+            times_gif = np.linspace(0, T, int(T * fps) + 1)
 
-    def make_gif(label, y0, f_phi_fn, filename):
-        sol       = redstart_solve([0.0, T], y0, f_phi_fn)
-        times_gif = np.linspace(0, T, int(T * fps) + 1)
+            states = []
+            for t_i in times_gif:
+                s_i      = sol(t_i)
+                fi, phii = f_phi_fn(t_i, s_i)
+                states.append({
+                    't':     t_i,
+                    'x':     float(s_i[0]),
+                    'y':     float(s_i[2]),
+                    'theta': float(s_i[4]),
+                    'f':     float(fi),
+                    'phi':   float(phii),
+                })
 
-        states = []
-        for t_i in times_gif:
-            s_i      = sol(t_i)
-            fi, phii = f_phi_fn(t_i, s_i)
-            states.append({
-                't':     t_i,
-                'x':     float(s_i[0]),
-                'y':     float(s_i[2]),
-                'theta': float(s_i[4]),
-                'f':     float(fi),
-                'phi':   float(phii),
-            })
+            fig, ax = plt.subplots(figsize=(3, 5))
+            ax.set_xlim(-3, 3)
+            ax.set_ylim(-0.5, 11)
+            ax.set_aspect('equal')
+            ax.axis('off')
+            ax.set_title(label, fontsize=7, pad=4)
 
-        fig, ax = plt.subplots(figsize=(3, 5))
-        ax.set_xlim(-3, 3)
-        ax.set_ylim(-0.5, 11)
-        ax.set_aspect('equal')
-        ax.axis('off')
-        ax.set_title(label, fontsize=7, pad=4)
+            ax.add_patch(patches.Rectangle((-3, -0.5), 6, 12,   color='skyblue', zorder=0))
+            ax.add_patch(patches.Rectangle((-3, -0.5), 6,  0.5, color='#8B6914', zorder=1))
+            ax.add_patch(patches.Rectangle((-1,  0.0), 2,  0.1, color='lime',    zorder=2))
 
-        ax.add_patch(patches.Rectangle((-3, -0.5), 6, 12,   color='skyblue', zorder=0))
-        ax.add_patch(patches.Rectangle((-3, -0.5), 6,  0.5, color='#8B6914', zorder=1))
-        ax.add_patch(patches.Rectangle((-1,  0.0), 2,  0.1, color='lime',    zorder=2))
+            body_w_g  = l / 5
+            body_h_g  = l
+            flame_w_g = l / 5
 
-        body_w_g  = l / 5
-        body_h_g  = l
-        flame_w_g = l / 5
-
-        body_p = patches.Rectangle(
-            (-body_w_g/2, -body_h_g/2), body_w_g, body_h_g,
-            color='black', zorder=5
-        )
-        ax.add_patch(body_p)
-
-        flame_p = patches.Rectangle(
-            (-flame_w_g/2, 0), flame_w_g, 0.001,
-            color='red', zorder=4
-        )
-        ax.add_patch(flame_p)
-
-        info_txt = ax.text(-2.8, 10.4, '', fontsize=6, color='black', zorder=6)
-
-        def update(frame):
-            st          = states[frame]
-            x, y, theta = st['x'], st['y'], st['theta']
-            f, phi      = st['f'], st['phi']
-            landed      = y <= l / 2 + 0.05
-
-            tb = (Affine2D().rotate(-theta).translate(x, y) + ax.transData)
-            body_p.set_transform(tb)
-
-            if landed or f <= 0:
-                flame_p.set_visible(False)
-            else:
-                flame_len = (l/2) * (f / (M*g))
-                flame_p.set_visible(True)
-                flame_p.set_height(flame_len)
-                flame_p.set_width(flame_w_g)
-                flame_p.set_xy((-flame_w_g/2, -(body_h_g/2 + flame_len)))
-                tf = (Affine2D()
-                      .rotate_around(0, -body_h_g/2, -phi)
-                      .rotate_around(0,  0,           -theta)
-                      .translate(x, y)
-                      + ax.transData)
-                flame_p.set_transform(tf)
-
-            info_txt.set_text(
-                f't={st["t"]:.1f}s  y={y:.2f}m'
-                + ('  LANDED' if landed else f'  f={f:.2f}N')
+            body_p = patches.Rectangle(
+                (-body_w_g/2, -body_h_g/2), body_w_g, body_h_g,
+                color='black', zorder=5
             )
-            return body_p, flame_p, info_txt
+            ax.add_patch(body_p)
 
-        ani = animation.FuncAnimation(
-            fig, update,
-            frames=len(states),
-            interval=1000/fps,
-            blit=True,
-            repeat=True,
-        )
-        ani.save(filename, writer="pillow", fps=fps)
-        plt.close(fig)
-        return filename
+            flame_p = patches.Rectangle(
+                (-flame_w_g/2, 0), flame_w_g, 0.001,
+                color='red', zorder=4
+            )
+            ax.add_patch(flame_p)
 
-    gif_files = []
-    for i, (label, y0, f_phi_fn) in enumerate(scenarios):
-        path = f"/tmp/scenario_{i+1}.gif"
-        make_gif(label, y0, f_phi_fn, path)
-        gif_files.append(path)
+            info_txt = ax.text(-2.8, 10.4, '', fontsize=6, color='black', zorder=6)
 
-    mo.hstack([mo.image(src=p) for p in gif_files])
+            def update(frame):
+                st          = states[frame]
+                x, y, theta = st['x'], st['y'], st['theta']
+                f, phi      = st['f'], st['phi']
+                landed      = y <= l / 2 + 0.05
+
+                tb = (Affine2D().rotate(-theta).translate(x, y) + ax.transData)
+                body_p.set_transform(tb)
+
+                if landed or f <= 0:
+                    flame_p.set_visible(False)
+                else:
+                    flame_len = (l/2) * (f / (M*g))
+                    flame_p.set_visible(True)
+                    flame_p.set_height(flame_len)
+                    flame_p.set_width(flame_w_g)
+                    flame_p.set_xy((-flame_w_g/2, -(body_h_g/2 + flame_len)))
+                    tf = (Affine2D()
+                          .rotate_around(0, -body_h_g/2, -phi)
+                          .rotate_around(0,  0,           -theta)
+                          .translate(x, y)
+                          + ax.transData)
+                    flame_p.set_transform(tf)
+
+                info_txt.set_text(
+                    f't={st["t"]:.1f}s  y={y:.2f}m'
+                    + ('  LANDED' if landed else f'  f={f:.2f}N')
+                )
+                return body_p, flame_p, info_txt
+
+            ani = animation.FuncAnimation(
+                fig, update,
+                frames=len(states),
+                interval=1000/fps,
+                blit=True,
+                repeat=True,
+            )
+            ani.save(filename, writer="pillow", fps=fps)
+            plt.close(fig)
+            return filename
+
+        gif_files = []
+        for i, (label, y0_sc, f_phi_fn) in enumerate(scenarios):
+            path = f"/tmp/scenario_{i+1}.gif"
+            make_gif(label, y0_sc, f_phi_fn, path)
+            gif_files.append(path)
+
+        return mo.hstack([mo.image(src=p) for p in gif_files])
+
+    run_all_scenarios()
     return
 
 
