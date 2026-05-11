@@ -97,7 +97,8 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ## Constants
+    ## Constants 1
+
 
     For the sake of simplicity (this is merely a toy model!) in the sequel we assume that:
 
