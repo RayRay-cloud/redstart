@@ -72,7 +72,7 @@ def _():
     import numpy.linalg as la
 
 
-    return np, sci
+    return np, plt, sci
 
 
 @app.cell(hide_code=True)
@@ -139,7 +139,7 @@ def _(mo):
 
 @app.cell
 def _():
-    g=10
+    g=1
     M=1.0
     l=2.0
     return M, g, l
@@ -244,7 +244,7 @@ def _(mo):
 
 @app.cell
 def _(M, l):
-    J = (1/12) * M * (l)**2
+    J = (1/12) * M * l**2
     return (J,)
 
 
@@ -419,34 +419,20 @@ def _(mo):
 @app.cell
 def _(J, M, g, l, np, sci):
     def redstart_solve(t_span, y0, f_phi):
-
         def rhs(t, y):
             x, vx, y_pos, vy, theta, omega = y
-
             f, phi = f_phi(t, y)
-
             fx = -f * np.sin(theta + phi)
             fy = f * np.cos(theta + phi)
-
             ax = fx / M
             ay = (fy - M * g) / M
-
-            torque = -(l / 2) * f * np.sin(phi)
+            torque = - (l / 2) * f * np.sin(phi)
             alpha = torque / J
-
             return [vx, ax, vy, ay, omega, alpha]
-
-        sol = sci.solve_ivp(
-            rhs,
-            t_span,
-            y0,
-            dense_output=True,
-            max_step=0.01,
-        )
-
+        sol = sci.solve_ivp(rhs, t_span, y0, dense_output=True)
         return sol.sol
 
-    return
+    return (redstart_solve,)
 
 
 @app.cell(hide_code=True)
@@ -460,6 +446,37 @@ def _(mo):
 
     Check your `redstart_solve` function in this scenario and produce a graph that allows us to check the above answer numerically/visually.
     """)
+    return
+
+
+@app.cell
+def _(l, np, plt, redstart_solve):
+    t_span = [0.0, 5.0]
+
+    y0 = [0, 0, 10, 0, 0, 0]
+
+    def f_phi(t, y):
+        return np.array([0.0, 0.0])
+
+    sol = redstart_solve(t_span, y0, f_phi)
+
+    t = np.linspace(0, 5, 1000)
+
+    Y = sol(t)
+
+    plt.figure(figsize=(8,5))
+
+    plt.plot(t, Y[2], label=r"$y(t)$")
+    plt.axhline(l, color="red", linestyle="--", label=r"$y=\ell$")
+    plt.axvline(4, color="green", linestyle="--", label=r"$t=4$")
+
+    plt.xlabel("time")
+    plt.ylabel("height")
+    plt.title("Free Fall Verification")
+    plt.grid(True)
+    plt.legend()
+
+    plt.gcf()
     return
 
 
