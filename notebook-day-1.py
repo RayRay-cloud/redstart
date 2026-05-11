@@ -72,7 +72,7 @@ def _():
     import numpy.linalg as la
 
 
-    return np, sci
+    return np, plt, sci
 
 
 @app.cell(hide_code=True)
@@ -139,7 +139,7 @@ def _(mo):
 
 @app.cell
 def _():
-    g=10
+    g=1
     M=1.0
     l=2.0
     return M, g, l
@@ -275,11 +275,6 @@ def _(mo):
 
     $$\dot{\theta} = \omega, \quad \dot{\omega} = -\frac{\ell}{2J} f \sin\phi$$
     """)
-    return
-
-
-@app.cell
-def _():
     return
 
 
@@ -446,7 +441,7 @@ def _(J, M, g, l, np, sci):
 
         return sol.sol
 
-    return
+    return (redstart_solve,)
 
 
 @app.cell(hide_code=True)
@@ -463,6 +458,37 @@ def _(mo):
     return
 
 
+@app.cell
+def _(l, np, plt, redstart_solve):
+    t_span = [0.0, 5.0]
+
+    y0 = [0, 0, 10, 0, 0, 0]
+
+    def f_phi(t, y):
+        return np.array([0.0, 0.0])
+
+    sol = redstart_solve(t_span, y0, f_phi)
+
+    t = np.linspace(0, 5, 1000)
+
+    Y = sol(t)
+
+    plt.figure(figsize=(8,5))
+
+    plt.plot(t, Y[2], label=r"$y(t)$")
+    plt.axhline(l, color="red", linestyle="--", label=r"$y=\ell$")
+    plt.axvline(4, color="green", linestyle="--", label=r"$t=4$")
+
+    plt.xlabel("time")
+    plt.ylabel("height")
+    plt.title("Free Fall Verification")
+    plt.grid(True)
+    plt.legend()
+
+    plt.gcf()
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -474,6 +500,181 @@ def _(mo):
 
     Simulate the corresponding scenario, display graphically the results and check that your solution works as expected.
     """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    # Controlled Landing — Redstart Booster
+
+    ## Initial Conditions
+
+    $$x(0) = 0, \quad \dot{x}(0) = 0, \quad \theta(0) = 0, \quad \dot{\theta}(0) = 0$$
+    $$y(0) = 10 \text{ m}, \quad \dot{y}(0) = -2 \text{ m/s}$$
+
+    ## Goal
+
+    Find $f(t)$ such that at $t = 5$ s:
+
+    $$y(5) = \frac{\ell}{2} = 1 \text{ m} \quad \text{(booster at ground level)}, \qquad \dot{y}(5) = 0 \text{ m/s} \quad \text{(booster at rest)}$$
+
+    ---
+
+    ## Simplification
+
+    Since $\theta = 0$ and $\phi = 0$ throughout, the horizontal and angular motion stay zero. Only the vertical axis matters.
+
+    Newton's second law gives:
+
+    $$M\ddot{y} = f - Mg \quad \Rightarrow \quad \ddot{y} = \frac{f}{M} - g$$
+
+    ---
+
+    ## Method: Inverse Trajectory Planning
+
+    **Idea:** freely choose a smooth $y(t)$ that satisfies all 4 boundary conditions, then compute the force $f(t)$ that produces it.
+
+    We pick a **cubic polynomial** (4 unknowns for 4 conditions):
+
+    $$y(t) = at^3 + bt^2 + ct + d$$
+
+    Its derivatives are:
+
+    $$\dot{y}(t) = 3at^2 + 2bt + c$$
+
+    $$\ddot{y}(t) = 6at + 2b$$
+
+    ### Finding the Coefficients
+
+    **$d$ and $c$ are found directly** from the initial conditions at $t=0$:
+
+    $$y(0) = d = 10 \quad \Rightarrow \quad d = 10$$
+
+    $$\dot{y}(0) = c = -2 \quad \Rightarrow \quad c = -2$$
+
+    **$a$ and $b$ require solving a 2×2 system** using the conditions at $t=5$:
+
+    $$y(5) = 125a + 25b + 5(-2) + 10 = 1 \quad \Rightarrow \quad 125a + 25b = 1$$
+
+    $$\dot{y}(5) = 75a + 10b + (-2) = 0 \quad \Rightarrow \quad 75a + 10b = 2$$
+
+    $$\begin{pmatrix} 125 & 25 \\ 75 & 10 \end{pmatrix} \begin{pmatrix} a \\ b \end{pmatrix} = \begin{pmatrix} 1 \\ 2 \end{pmatrix} \quad \Rightarrow \quad \text{solved with } \texttt{np.linalg.solve}$$
+
+    ### Reactor Force
+
+    Once $y(t)$ is known, $\ddot{y}(t) = 6at + 2b$ is also known, so:
+
+    $$\boxed{f(t) = M\bigl(\ddot{y}(t) + g\bigr)}$$
+
+    $f(t)$ is a **linear function of $t$** — simple and physically realizable (positive throughout).
+
+    ---
+
+    ## Simulation Results
+
+    | Variable | $t = 0$ | $t = 5$ |
+    |----------|---------|---------|
+    | $y(t)$ | $10$ m | $1$ m |
+    | $\dot{y}(t)$ | $-2$ m/s | $0$ m/s |
+    | $x(t)$, $\dot{x}(t)$, $\theta(t)$ | $0$ | $0$ (unchanged) |
+    | $f(t)$ | — | $\geq 0$ everywhere |
+    """)
+    return
+
+
+@app.cell
+def _(M, g, l, np, plt, redstart_solve):
+    def controlled_landing():
+        d = 10
+        c = -2
+        A = np.array([[125, 25],
+                      [75,  10]])
+        b_vec = np.array([1 - 5*c - d, -c])
+        a, b = np.linalg.solve(A, b_vec)
+
+        def f_control(t):
+            yddot = 6*a*t + 2*b
+            return M * (yddot + g)
+
+        t_span = [0.0, 5.0]
+        y0 = [0.0, 0.0, 10.0, -2.0, 0.0, 0.0]  # x=0, vx=0, y=10, vy=-2, theta=0, omega=0
+
+        def f_phi(t, y):
+            return np.array([f_control(t), 0.0])
+
+        sol = redstart_solve(t_span, y0, f_phi)
+
+        t = np.linspace(0, 5, 1000)
+        Y = sol(t)
+
+        # x(t)
+        plt.subplot(2, 3, 1)
+        plt.plot(t, Y[0], label=r"$x(t)$")
+        plt.axhline(0, color="grey", ls="--", label=r"$x=0$")
+        plt.title("Position horizontale x(t)")
+        plt.xlabel("temps $t$")
+        plt.grid(True)
+        plt.legend()
+
+        # vx(t)
+        plt.subplot(2, 3, 2)
+        plt.plot(t, Y[1], label=r"$\dot{x}(t)$", color="orange")
+        plt.axhline(0, color="grey", ls="--")
+        plt.title("Vitesse horizontale vx(t)")
+        plt.xlabel("temps $t$")
+        plt.grid(True)
+        plt.legend()
+
+        # y(t)
+        plt.subplot(2, 3, 3)
+        plt.plot(t, Y[2], label=r"$y(t)$", color="blue")
+        plt.axhline(l/2, color="grey", ls="--", label=r"$y=\ell/2$")
+        plt.title("Position verticale y(t)")
+        plt.xlabel("temps $t$")
+        plt.grid(True)
+        plt.legend()
+
+        # vy(t)
+        plt.subplot(2, 3, 4)
+        plt.plot(t, Y[3], label=r"$\dot{y}(t)$", color="green")
+        plt.axhline(0, color="grey", ls="--", label=r"$\dot{y}=0$")
+        plt.title("Vitesse verticale vy(t)")
+        plt.xlabel("temps $t$")
+        plt.grid(True)
+        plt.legend()
+
+        # theta(t)
+        plt.subplot(2, 3, 5)
+        plt.plot(t, Y[4], label=r"$\theta(t)$", color="purple")
+        plt.axhline(0, color="grey", ls="--")
+        plt.title("Angle θ(t)")
+        plt.xlabel("temps $t$")
+        plt.grid(True)
+        plt.legend()
+
+        # f(t)
+        plt.subplot(2, 3, 6)
+        plt.plot(t, f_control(t), label=r"$f(t)$", color="red")
+        plt.axhline(M*g, color="grey", ls="--", label=r"$f=Mg$")
+        plt.title("Force f(t)")
+        plt.xlabel("temps $t$")
+        plt.grid(True)
+        plt.legend()
+
+        plt.suptitle("Atterrissage Contrôlé", fontsize=14)
+        plt.tight_layout()
+
+        # Vérification numérique
+        Y_final = sol(5.0)
+        print(f"y(5)  = {Y_final[2]:.4f}  (cible : {l/2})")
+        print(f"ẏ(5)  = {Y_final[3]:.4f}  (cible : 0)")
+        print(f"x(5)  = {Y_final[0]:.4f}  (cible : 0)")
+        print(f"ẋ(5)  = {Y_final[1]:.4f}  (cible : 0)")
+
+        return plt.gcf()
+
+    controlled_landing()
     return
 
 
