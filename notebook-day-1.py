@@ -257,6 +257,31 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    Applying the angular momentum theorem about the center of mass, the torque exerted by the reactor force is:
+
+    $$\tau = -\frac{\ell}{2} \cdot f \sin\phi$$
+
+    where $\frac{\ell}{2}$ is the distance between the center of mass and the base of the booster (the point where the force is applied).
+
+    The fundamental rotation law gives $J\ddot{\theta} = \tau$, so:
+
+    $$\ddot{\theta} = -\frac{\ell}{2J} f \sin\phi$$
+
+    If we consider that $\omega = \dot{\theta}$, the equation becomes:
+
+    $$\dot{\theta} = \omega, \quad \dot{\omega} = -\frac{\ell}{2J} f \sin\phi$$
+    """)
+    return
+
+
+@app.cell
+def _():
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## 🧩 Vector Field
 
     Denote
