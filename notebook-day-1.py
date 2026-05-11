@@ -1024,22 +1024,29 @@ def _(M, g, l, mo, np, plt, redstart_solve):
         st          = states_gif[frame]
         x, y, theta = st['x'], st['y'], st['theta']
         f, phi      = st['f'], st['phi']
-        flame_len   = (l/2) * (f / (M*g)) if f > 0 else 0.001
+
+        # Hide flame when booster has landed
+        landed = y <= l / 2 + 0.05
 
         tb = (Affine2D().rotate(-theta).translate(x, y) + ax_gif.transData)
         body_p.set_transform(tb)
 
-        flame_p.set_height(flame_len)
-        flame_p.set_width(flame_w_g)
-        flame_p.set_xy((-flame_w_g/2, -(body_h_g/2 + flame_len)))
-        tf = (Affine2D()
-              .rotate_around(0, -body_h_g/2, -phi)
-              .rotate_around(0, 0, -theta)
-              .translate(x, y)
-              + ax_gif.transData)
-        flame_p.set_transform(tf)
+        if landed:
+            flame_p.set_visible(False)
+        else:
+            flame_len = (l/2) * (f / (M*g)) if f > 0 else 0.001
+            flame_p.set_visible(True)
+            flame_p.set_height(flame_len)
+            flame_p.set_width(flame_w_g)
+            flame_p.set_xy((-flame_w_g/2, -(body_h_g/2 + flame_len)))
+            tf = (Affine2D()
+                  .rotate_around(0, -body_h_g/2, -phi)
+                  .rotate_around(0, 0, -theta)
+                  .translate(x, y)
+                  + ax_gif.transData)
+            flame_p.set_transform(tf)
 
-        info_txt.set_text(f't={st["t"]:.1f}s  y={y:.2f}m  f={f:.2f}N')
+        info_txt.set_text(f't={st["t"]:.1f}s  y={y:.2f}m  {"LANDED" if landed else f"f={f:.2f}N"}')
         return body_p, flame_p, info_txt
 
     ani_gif = animation.FuncAnimation(
@@ -1050,10 +1057,10 @@ def _(M, g, l, mo, np, plt, redstart_solve):
         repeat=True,
     )
 
-    ani_gif.save("/tmp/landing2.gif", writer="pillow", fps=fps)
+    ani_gif.save("/tmp/landing3.gif", writer="pillow", fps=fps)
     plt.close(fig_gif)
 
-    mo.image(src="/tmp/landing2.gif")
+    mo.image(src="/tmp/landing3.gif")
     return
 
 
