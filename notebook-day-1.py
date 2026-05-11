@@ -755,7 +755,7 @@ def world(view_box, *objects):
 
     sky    = f'<rect x="0" y="0" width="{W}" height="{H}" fill="skyblue"/>'
     ground = f'<rect x="0" y="{wy(0)}" width="{W}" height="{H - wy(0)}" fill="#8B6914"/>'
-    pad    = f'<rect x="{wx(-1)}" y="{wy(0)}" width="{2*scale}" height="5" fill="lime"/>'
+    pad    = f'<rect x="{wx(-1)}" y="{wy(0)}" width="{2*scale}" height="{0.2*scale}" fill="lime"/>'
 
     objects_svg = "".join(str(obj) for obj in objects)
     flip = f'translate({wx(0)}, {wy(0)}) scale({scale}, {-scale})'
@@ -772,10 +772,9 @@ def _(mo):
             mo.Html(
                 world([-3, 3, -2, 4])
             )
-        
+
         ],
     )
-
     return
 
 
@@ -875,6 +874,58 @@ def _(mo):
     ).center()
     ```
     """)
+    return
+
+
+@app.cell
+def _(M, g, l, np):
+    def booster(x, y, theta, f, phi):
+        body_w = l / 5
+        body_h = l
+        flame_w = l / 5
+        flame_len = (l / 2) * (f / (M * g)) if f > 0 else 0
+
+        # Body centered at (x,y)
+        body = f'<rect x="{-body_w/2}" y="{-body_h/2}" width="{body_w}" height="{body_h}" fill="black"/>'
+
+        # Flame: starts at base (y = -l/2), extends downward by flame_len
+        # Use positive height, position rect starting at y=-l/2 going to y=-(l/2+flame_len)
+        flame = f'''<g transform="translate(0, {-(body_h/2 + flame_len)}) rotate({np.degrees(-phi)}, 0, {flame_len})">
+            <rect x="{-flame_w/2}" y="0" width="{flame_w}" height="{flame_len}" fill="red"/>
+        </g>''' if flame_len > 0 else ''
+
+        angle_deg = np.degrees(-theta)
+
+        return f'<g transform="translate({x}, {y}) rotate({angle_deg}, 0, 0)">{body}{flame}</g>'
+
+    return (booster,)
+
+
+@app.cell
+def _(M, booster, g, l, mo, np):
+    mo.hstack(
+        [
+            mo.Html(
+                world(
+                    [-3, 3, -2, 4],
+                    booster(0, l/2, 0, 0, 0),
+                )
+            ),
+            mo.Html(
+                world(
+                    [-3, 3, -2, 4],
+                    booster(0, l, 0, M * g, 0),
+                )
+            ),
+            mo.Html(
+                world(
+                    [-3, 3, -2, 4],
+                    booster(-l/2, l, np.pi / 4, 2 * M * g, np.pi / 2),
+                )
+            ),
+        ],
+        justify="space-around",
+    )
     return
 
 
