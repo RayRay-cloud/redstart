@@ -244,7 +244,7 @@ def _(mo):
 
 @app.cell
 def _(M, l):
-    J = (1/12) * M * (l)**2
+    J = (1/12) * M * l**2
     return (J,)
 
 
@@ -414,31 +414,17 @@ def _(mo):
 @app.cell
 def _(J, M, g, l, np, sci):
     def redstart_solve(t_span, y0, f_phi):
-
         def rhs(t, y):
             x, vx, y_pos, vy, theta, omega = y
-
             f, phi = f_phi(t, y)
-
             fx = -f * np.sin(theta + phi)
             fy = f * np.cos(theta + phi)
-
             ax = fx / M
             ay = (fy - M * g) / M
-
-            torque = -(l / 2) * f * np.sin(phi)
+            torque = - (l / 2) * f * np.sin(phi)
             alpha = torque / J
-
             return [vx, ax, vy, ay, omega, alpha]
-
-        sol = sci.solve_ivp(
-            rhs,
-            t_span,
-            y0,
-            dense_output=True,
-            max_step=0.01,
-        )
-
+        sol = sci.solve_ivp(rhs, t_span, y0, dense_output=True)
         return sol.sol
 
     return (redstart_solve,)
