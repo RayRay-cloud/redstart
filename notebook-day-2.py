@@ -1424,7 +1424,7 @@ def _(mo):
     Les équations qui nous intéressent deviennent :
 
     $$\ddot{\Delta x} = -g(\Delta\theta + \Delta\phi)$$
-    $$\ddot{\Delta\theta} = -\frac{3g}{\ell}\,\Delta\phi$$
+    $$\ddot{\Delta\theta} = -\frac{\ell \cdot Mg}{J}\Delta\varphi$$
 
     On obtient donc :
 
@@ -1444,9 +1444,7 @@ def _(mo):
 
 
 @app.cell
-def _(g, l, np):
-
-
+def _(J, M, g, l, np):
     A_lat = np.array([
         [0, 1,  0, 0],
         [0, 0, -g, 0],
@@ -1458,7 +1456,7 @@ def _(g, l, np):
         [0],
         [-g],
         [0],
-        [-3*g/l]
+        [-l*M*g/J]
     ], dtype=float)
 
     # Controllability matrix
