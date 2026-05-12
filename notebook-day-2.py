@@ -1295,7 +1295,7 @@ def _(mo):
     0 & 0 \\
     1 & 0 \\
     0 & 0 \\
-    0 & -\frac{3}{2}
+    0 & -6
     \end{bmatrix}
     $$
 
@@ -1311,7 +1311,7 @@ def _(mo):
 
     - **Row 5** — $\dot{\Delta\theta} = \dot{\Delta\theta}$: no input acts here. Both columns zero.
 
-    - **Row 6** — $\ddot{\Delta\theta} = -\frac{3g}{\ell}\Delta\varphi$: only $\Delta\varphi$ appears, with coefficient $-\frac{3g}{\ell} = -\frac{3}{2}$. So column 1 ($\Delta f$) is $0$, column 2 ($\Delta\varphi$) is $-\frac{3}{2}$.
+    - **Row 6** — $\ddot{\Delta\theta} = -\frac{\ell \cdot Mg}{J}\Delta\varphi = -\frac{12g}{\ell}\Delta\varphi$: only $\Delta\varphi$ appears. With $g=1$ and $\ell=2$, the coefficient is $-\frac{12 \times 1}{2} = -6$. So column 1 ($\Delta f$) is $0$, column 2 ($\Delta\varphi$) is $-6$.
 
     ### NumPy Arrays
 
@@ -1333,7 +1333,7 @@ def _(mo):
         [0,    0  ],
         [1,    0  ],
         [0,    0  ],
-        [0,   -1.5]
+        [0,   -6]
     ], dtype=float)
     ```
     """)
