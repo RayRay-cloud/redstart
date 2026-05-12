@@ -1232,6 +1232,19 @@ def _(mo):
     $A$ captures how the **current state** $\mathbf{x}$ influences $\dot{\mathbf{x}}$. It has **no input terms** (those go in $B$).
 
     $$
+    A =
+    \begin{bmatrix}
+    0 & 1 & 0 & 0 & 0  & 0 \\
+    0 & 0 & 0 & 0 & -g & 0 \\
+    0 & 0 & 0 & 1 & 0  & 0 \\
+    0 & 0 & 0 & 0 & 0  & 0 \\
+    0 & 0 & 0 & 0 & 0  & 1 \\
+    0 & 0 & 0 & 0 & 0  & 0
+    \end{bmatrix}
+    $$
+
+
+    $$
     A = \begin{bmatrix}
     0 & 1 & 0 & 0 & 0 & 0 \\
     0 & 0 & 0 & 0 & -1 & 0 \\
@@ -1259,7 +1272,17 @@ def _(mo):
     ### Matrix B
 
     $B$ captures how the **inputs** $\mathbf{u} = (\Delta f,\ \Delta\varphi)^T$ influence $\dot{\mathbf{x}}$.
-
+    $$
+    B =
+    \begin{bmatrix}
+    0 & 0\\
+    0 & -g\\
+    0 & 0\\
+    1/M & 0\\
+    0 & 0 \\
+    0 & -M g \ell/J\\
+    \end{bmatrix}
+    $$
     $$
     B = \begin{bmatrix}
     0 & 0 \\
