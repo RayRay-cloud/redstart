@@ -1401,7 +1401,10 @@ def _(mo):
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> ee5dd11b4945937472fcbd7efb6580e7129c60e3
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -1413,6 +1416,24 @@ def _(mo):
 
     Using python, we calculate the rank:
     """)
+<<<<<<< HEAD
+=======
+    return
+
+
+@app.cell
+def _(A, B, np):
+    C = np.hstack([np.linalg.matrix_power(A, i) @ B for i in range(6)])
+    print("Rank of controllability matrix:", np.linalg.matrix_rank(C))
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    We find $\text{rank}(\mathcal{C}) = 6$, which means that the system is indeed controllable.
+    """)
+>>>>>>> ee5dd11b4945937472fcbd7efb6580e7129c60e3
     return
 
 
