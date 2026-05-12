@@ -1312,7 +1312,6 @@ def _(mo):
     - **Row 4** — $\ddot{\Delta y} = \frac{\Delta f}{M}$: only $\Delta f$ appears, with coefficient $\frac{1}{M} = 1$. So column 1 ($\Delta f$) is $1$, column 2 ($\Delta\varphi$) is $0$.
     - **Row 5** — $\dot{\Delta\theta} = \dot{\Delta\theta}$: no input acts here. Both columns zero.
     - **Row 6** — $\ddot{\Delta\theta} = -\frac{\ell \cdot Mg}{2J}\Delta\varphi$: only $\Delta\varphi$ appears, with coefficient $-Mg\ell/(2J) = -3$. So column 1 ($\Delta f$) is $0$, column 2 ($\Delta\varphi$) is $-3$.
-    -
     """)
     return
 
