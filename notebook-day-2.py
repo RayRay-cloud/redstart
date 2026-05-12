@@ -1290,7 +1290,7 @@ def _(mo):
     0 & 0 \\
     1 & 0 \\
     0 & 0 \\
-    0 & -\frac{3}{2}
+    0 & -6
     \end{bmatrix}
     $$
 
@@ -1306,7 +1306,8 @@ def _(mo):
 
     - **Row 5** — $\dot{\Delta\theta} = \dot{\Delta\theta}$: no input acts here. Both columns zero.
 
-    - **Row 6** — $\ddot{\Delta\theta} = -\frac{3g}{\ell}\Delta\varphi$: only $\Delta\varphi$ appears, with coefficient $-\frac{3g}{\ell} = -\frac{3}{2}$. So column 1 ($\Delta f$) is $0$, column 2 ($\Delta\varphi$) is $-\frac{3}{2}$.
+    - **Row 6** —
+    $\ddot{\Delta\theta} = -\frac{\ell \cdot Mg}{J}\Delta\varphi$: only $\Delta\varphi$ appears, with coefficient $-M g \ell/J= -6$. So column 1 ($\Delta f$) is $0$, column 2 ($\Delta\varphi$) is $-6$.
     """)
     return
 
@@ -1328,7 +1329,7 @@ def _(np):
         [0,    0  ],
         [1,    0  ],
         [0,    0  ],
-        [0,   -1.5]
+        [0,   -6]
     ], dtype=float)
     return A, B
 
@@ -1388,14 +1389,6 @@ def _(mo):
 def _(A, B, np):
     C = np.hstack([np.linalg.matrix_power(A, i) @ B for i in range(6)])
     print("Rank of controllability matrix:", np.linalg.matrix_rank(C))
-    return
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
-    We find $\text{rank}(\mathcal{C}) = 6$, which means that the system is indeed controllable.
-    """)
     return
 
 
