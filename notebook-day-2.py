@@ -1470,7 +1470,7 @@ def _(g, np):
     C_lat = np.hstack([np.linalg.matrix_power(A_lat, k) @ B_lat for k in range(4)])
     print("Controllability matrix:\n", C_lat)
     print("\nRank:", np.linalg.matrix_rank(C_lat))
-    return (A_lat,)
+    return A_lat, B_lat
 
 
 @app.cell(hide_code=True)
@@ -1549,6 +1549,74 @@ def _(A_lat, np, plt):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    ## Observation des résultats
+
+    Les graphes mettent en évidence deux comportements distincts :
+
+    - $\theta(t) = \pi/4$ est **constant** pour tout $t$ .
+    - $x(t)$ **diverge quadratiquement**, conformément à une loi parabolique $x(t) = -\frac{g\pi}{8}t^2$.
+
+    ---
+
+    ## Analyse du comportement de $\theta(t)$
+
+    Dans le système linéarisé réduit, avec $\phi = 0$ et $\Delta f = 0$,
+    l'équation gouvernant la dynamique angulaire est :
+
+    $$J\ddot{\theta} = 0$$
+
+    Les conditions initiales étant $\theta(0) = \pi/4$ et $\dot{\theta}(0) = 0$,
+    la solution exacte est triviale :
+
+    $$\theta(t) = \frac{\pi}{4}, \quad \forall\, t \geq 0$$
+
+    L'angle d'inclinaison est un **mode non commandé** dans cette configuration —
+    en l'absence de couple extérieur, il se conserve indéfiniment par la première
+    loi de Newton appliquée en rotation.
+
+    ---
+
+    ## Analyse du comportement de $x(t)$
+
+    L'équation de la dynamique latérale est :
+
+    $$\ddot{x} = -g(\theta + \phi) = -g \cdot \frac{\pi}{4} = \text{constante}$$
+
+    puisque $\theta$ est constant et $\phi = 0$. Par intégration double avec
+    $x(0) = 0$ et $\dot{x}(0) = 0$ :
+
+    $$x(t) = -\frac{g\pi}{8}\,t^2$$
+
+    Le graphe confirme numériquement cette loi parabolique.
+
+    ---
+
+    ## Interprétation dynamique — instabilité en boucle ouverte
+
+    Ce résultat illustre une propriété fondamentale du système. Les valeurs
+    propres de la matrice $A_{lat}$ sont toutes nulles :
+
+    $$\text{Spec}(A_{lat}) = \{0,\, 0,\, 0,\, 0\}$$
+
+    Le système est donc **marginalement stable au sens spectral**. Cependant,
+    la structure de Jordan de $A_{lat}$ comporte des blocs d'ordre 2, ce qui
+    entraîne une croissance **polynomiale** des trajectoires : toute perturbation
+    initiale $\theta(0) \neq 0$, génère une accélération
+    latérale constante et donc une dérive quadratique non bornée de $x(t)$.
+    L'équilibre est ainsi **instable au sens de Lyapunov**, le système ne
+    possède aucun mécanisme de rappel intrinsèque et est structurellement
+    incapable de se corriger spontanément en boucle ouverte.
+
+    Ce constat nous pousse à la conception d'une loi de commande en **retour d'état**.
+    Le système étant complètement contrôlable, il est possible de stabiliser
+    asymptotiquement l'équilibre par placement de pôles en boucle fermée.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## 🧩 Manually Tuned Controller
 
     Try to find the two missing coefficients of the matrix
@@ -1583,6 +1651,224 @@ def _(mo):
     Explain your thought process, show your iterative guesses and simulations!
 
     Is your final closed-loop model asymptotically stable?
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Étape 1 — Calcul des gains
+
+    On cherche $K = [0,\ 0,\ k_3,\ k_4]$ tel que $\Delta\theta(t) \to 0$
+    en moins de 20 secondes.
+
+    **Dérivation des formules :**
+
+    En substituant la loi de commande $\Delta\phi = -k_3\Delta\theta - k_4\Delta\dot{\theta}$
+    dans l'équation de rotation linéarisée :
+
+    $$J\ddot{\theta} = -\frac{\ell}{2}Mg\,\Delta\phi
+    = -\frac{\ell}{2}Mg(-k_3\Delta\theta - k_4\Delta\dot{\theta})$$
+
+    ce qui donne, avec $\ell=2$, $M=1$, $g=1$, $J=1/3$ :
+
+    $$\ddot{\theta} = 3k_3\,\Delta\theta + 3k_4\,\Delta\dot{\theta}$$
+
+    soit, en réarrangeant :
+
+    $$\ddot{\theta} - 3k_4\,\dot{\theta} - 3k_3\,\theta = 0$$
+
+    En identifiant avec la forme standard d'un oscillateur du second ordre
+    $\ddot{\theta} + 2\zeta\omega_n\dot{\theta} + \omega_n^2\theta = 0$,
+    on obtient par identification terme à terme :
+
+    $$-3k_4 = 2\zeta\omega_n \implies k_4 = -\frac{2\zeta\omega_n}{3}$$
+
+    $$-3k_3 = \omega_n^2 \implies k_3 = -\frac{\omega_n^2}{3}$$
+
+    On choisit $\omega_n$ et $\zeta$ librement — ils seront ajustés par
+    itération jusqu'à satisfaire toutes les contraintes.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Étape 2 — Simulation en boucle fermée
+
+    La fonction `simulate_lateral` intègre numériquement le système
+    en boucle fermée :
+
+    $$\dot{s} = A_{lat}\,s + B_{lat}\,\Delta\phi(t), \qquad
+    \Delta\phi(t) = -K \cdot s$$
+
+    La commande $\Delta\phi$ est saturée à $[-\pi/2,\ \pi/2]$ à chaque
+    instant pour respecter la contrainte physique sur l'angle du réacteur.
+    Les conditions initiales sont $\Delta\theta(0) = \pi/4$ (45°) et
+    toutes les autres variables nulles.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+ 
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Étape 3 — Visualisation des résultats
+
+    Pour chaque essai, trois grandeurs sont tracées :
+
+    - $\Delta x(t)$ : dérive latérale — non contrôlée, une dérive est attendue
+    - $\Delta\theta(t)$ : angle d'inclinaison — doit converger vers $0$ en < 20s
+      et rester dans $[-\pi/2,\ \pi/2]$ à tout instant
+    - $\Delta\phi(t)$ : commande appliquée au réacteur — doit rester dans
+      $[-\pi/2,\ \pi/2]$ à tout instant
+    """)
+    return
+
+
+@app.cell
+def _(A_lat, B_lat, mo, np, plt):
+    def simulate_and_plot(k3, k4, t_end=30.0, label=""):
+        from scipy.integrate import solve_ivp
+
+        K  = np.array([0.0, 0.0, k3, k4])
+        s0 = [0.0, 0.0, 45/180*np.pi, 0.0]
+
+        def boucle_fermee(t, s):
+            Delta_phi = -K @ s
+            Delta_phi = np.clip(Delta_phi, -np.pi/2, np.pi/2)
+            return A_lat @ s + B_lat.flatten() * Delta_phi
+
+        t   = np.linspace(0, t_end, 2000)
+        sol = solve_ivp(boucle_fermee, [0, t_end], s0, t_eval=t)
+
+        Delta_phi = np.array([
+            -np.clip(K @ sol.y[:, i], -np.pi/2, np.pi/2)
+            for i in range(sol.y.shape[1])
+        ])
+
+        fig, axes = plt.subplots(1, 3, figsize=(14, 4))
+        fig.suptitle(f"K = [0, 0, {k3:.4f}, {k4:.4f}]  {label}")
+
+        axes[0].plot(t, sol.y[0], color='steelblue')
+        axes[0].set_title(r"Dérive latérale $\Delta x(t)$")
+        axes[0].set_xlabel("temps $t$")
+        axes[0].set_ylabel("$x$ (m)")
+        axes[0].grid(True)
+
+        axes[1].plot(t, sol.y[2] * 180/np.pi, color='steelblue', label=r"$\Delta\theta(t)$")
+        axes[1].axhline( 90, color='r', ls='--', lw=1.0, label=r"$\pm\pi/2$")
+        axes[1].axhline(-90, color='r', ls='--', lw=1.0)
+        axes[1].axhline(  0, color='k', ls='-',  lw=0.5)
+        axes[1].set_title(r"Inclinaison $\Delta\theta(t)$")
+        axes[1].set_xlabel("temps $t$")
+        axes[1].set_ylabel("degrés")
+        axes[1].legend(); axes[1].grid(True)
+
+        axes[2].plot(t, Delta_phi * 180/np.pi, color='orange', label=r"$\Delta\phi(t)$")
+        axes[2].axhline( 90, color='r', ls='--', lw=1.0, label=r"$\pm\pi/2$")
+        axes[2].axhline(-90, color='r', ls='--', lw=1.0)
+        axes[2].axhline(  0, color='k', ls='-',  lw=0.5)
+        axes[2].set_title(r"Commande $\Delta\phi(t)$")
+        axes[2].set_xlabel("temps $t$")
+        axes[2].set_ylabel("degrés")
+        axes[2].legend(); axes[2].grid(True)
+
+        plt.tight_layout()
+        return fig
+
+
+    # Itération 1 — trop lent
+    fig1 = simulate_and_plot(-(0.40)**2/3, -2*1.0*0.40/3, label="Itération 1 : ωₙ=0.4, ζ=1.0")
+
+    # Itération 2 — mieux
+    fig2 = simulate_and_plot(-(0.55)**2/3, -2*1.0*0.55/3, label="Itération 2 : ωₙ=0.55, ζ=1.0")
+
+    # Itération 3 — solution finale
+    fig3 = simulate_and_plot(-(0.77)**2/3, -2*1.1*0.77/3, label="Itération 3 : ωₙ=0.77, ζ=1.1")
+
+    mo.vstack([fig1, fig2, fig3])
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    **Itération 1** — $\omega_n = 0.4$, $\zeta = 1.0$ :
+    Premier essai avec amortissement critique. La convergence est trop lente.
+    On augmente $\omega_n$.
+
+    **Itération 2** — $\omega_n = 0.55$, $\zeta = 1.0$ :
+    La convergence s'améliore mais reste insuffisante (~25s).
+    On augmente encore $\omega_n$ et $\zeta$.
+
+    **Itération 3** — $\omega_n = 0.77$, $\zeta = 1.1$ :
+    Convergence obtenue en moins de 20s. Les contraintes sur $\Delta\theta$
+    et $\Delta\phi$ sont respectées à tout instant. Ces gains constituent
+    la **solution finale retenue**.
+    """)
+    return
+
+
+@app.cell
+def _(A_lat, B_lat, np):
+    k3_final = -(0.77)**2 / 3
+    k4_final = -2 * 1.1 * 0.77 / 3
+
+    K_final = np.array([0.0, 0.0, k3_final, k4_final])
+
+    A_cl = A_lat - B_lat @ K_final.reshape(1, -1)  
+    valeurs_propres = np.linalg.eigvals(A_cl)
+
+    print("Valeurs propres en boucle fermée :")
+    for vp in valeurs_propres:
+        print(f"  λ = {vp:.4f}  →  partie réelle = {vp.real:.4f}")
+
+    print()
+    print("Asymptotiquement stable ?", np.all(valeurs_propres.real < 0))
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Analyse de stabilité en boucle fermée
+
+    La matrice en boucle fermée $A_{cl} = A_{lat} - B_{lat}K$ admet
+    quatre valeurs propres :
+
+    | Valeur propre | Partie réelle | Interprétation |
+    |---------------|---------------|----------------|
+    | $\lambda_1 = 0$ | $0$ | $\Delta x$ non contrôlé |
+    | $\lambda_2 = 0$ | $0$ | $\Delta\dot{x}$ non contrôlé |
+    | $\lambda_3 = -0.494$ | $< 0$ ✓ | sous-système $\theta$ stable |
+    | $\lambda_4 = -1.200$ | $< 0$ ✓ | sous-système $\dot{\theta}$ stable |
+
+    Le système en boucle fermée n'est **pas asymptotiquement stable au sens
+    global** — et c'est un résultat attendu. Les deux valeurs propres nulles
+    reflètent le choix délibéré $k_1 = k_2 = 0$ : on n'a pas cherché à
+    contrôler $\Delta x$.
+
+    En revanche, les deux valeurs propres strictement négatives garantissent
+    que $\Delta\theta(t) \to 0$ exponentiellement, ce qui satisfait
+    l'ensemble des spécifications imposées :
+
+    - ✓ $\Delta\theta(t) \to 0$ en moins de 20s
+    - ✓ $|\Delta\theta(t)| < \pi/2$ à tout instant
+    - ✓ $|\Delta\phi(t)| < \pi/2$ à tout instant
+
+    Pour stabiliser également $\Delta x$, il faudrait activer les gains
+    $k_1$ et $k_2$ — c'est l'objet de la partie suivante.
     """)
     return
 
