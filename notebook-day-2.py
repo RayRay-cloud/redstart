@@ -71,7 +71,7 @@ def _():
     import numpy as np
     import numpy.linalg as la
 
-    return np, plt, scipy
+    return la, np, plt, scipy
 
 
 @app.cell(hide_code=True)
@@ -1263,10 +1263,146 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    ## Matrices A and B — Construction and Explanation
+
+    ### State and Input Vectors
+
+    $$
+    \mathbf{x} = \begin{bmatrix}
+    \Delta x \\
+    \dot{\Delta x}\\
+    \Delta y \\
+    \dot{\Delta y}\\
+    \Delta \theta \\
+    \dot{\Delta \theta} \\
+    \end{bmatrix}, \qquad
+    \mathbf{u} = \begin{bmatrix}
+    \Delta f \\
+    \Delta \varphi
+    \end{bmatrix}
+    $$
+
+    ### Linearized Equations (from previous question)
+
+    $$
+    \ddot{\Delta x} = -g(\Delta \theta + \Delta \varphi)
+    $$
+    $$
+    \ddot{\Delta y} = \frac{\Delta f}{M}
+    $$
+    $$
+    \ddot{\Delta\theta} = -\frac{\ell \cdot Mg}{J}\Delta\varphi
+    $$
+
+    ### Matrix A
+
+    $A$ captures how the **current state** $\mathbf{x}$ influences $\dot{\mathbf{x}}$. It has **no input terms** (those go in $B$).
+
+    $$
+    A = \begin{bmatrix}
+    0 & 1 & 0 & 0 & 0 & 0 \\
+    0 & 0 & 0 & 0 & -1 & 0 \\
+    0 & 0 & 0 & 1 & 0 & 0 \\
+    0 & 0 & 0 & 0 & 0 & 0 \\
+    0 & 0 & 0 & 0 & 0 & 1 \\
+    0 & 0 & 0 & 0 & 0 & 0
+    \end{bmatrix}
+    $$
+
+    Reading row by row:
+
+    - **Row 1** — $\dot{\Delta x} = \dot{\Delta x}$: the derivative of position is velocity. So coefficient $+1$ on $\dot{\Delta x}$ (column 2), zeros elsewhere.
+
+    - **Row 2** — $\ddot{\Delta x} = -g\,\Delta\theta$: the only state-dependent term is $-g\Delta\theta$ (the $\Delta\varphi$ part goes into $B$ since it is an input). So coefficient $-g = -1$ on $\Delta\theta$ (column 5), zeros elsewhere.
+
+    - **Row 3** — $\dot{\Delta y} = \dot{\Delta y}$: same kinematic identity as row 1 but for $y$. Coefficient $+1$ on $\dot{\Delta y}$ (column 4), zeros elsewhere.
+
+    - **Row 4** — $\ddot{\Delta y} = \frac{\Delta f}{M}$: this depends **only** on the input $\Delta f$, not on any state. So this row is **all zeros** in $A$.
+
+    - **Row 5** — $\dot{\Delta \theta} = \dot{\Delta \theta}$: same as row 1. Coefficient $+1$ on $\dot{\Delta\theta}$ (column 6), zeros elsewhere.
+
+    - **Row 6** — $\ddot{\Delta\theta} = -\frac{\ell \cdot Mg}{J}\Delta\varphi$: this depends **only** on the input $\Delta\varphi$, not on any state. So this row is **all zeros** in $A$.
+
+    ### Matrix B
+
+    $B$ captures how the **inputs** $\mathbf{u} = (\Delta f,\ \Delta\varphi)^T$ influence $\dot{\mathbf{x}}$.
+
+    $$
+    B = \begin{bmatrix}
+    0 & 0 \\
+    0 & -1 \\
+    0 & 0 \\
+    1 & 0 \\
+    0 & 0 \\
+    0 & -\frac{3}{2}
+    \end{bmatrix}
+    $$
+
+    Reading row by row:
+
+    - **Row 1** — $\dot{\Delta x} = \dot{\Delta x}$: no input acts here. Both columns zero.
+
+    - **Row 2** — $\ddot{\Delta x} = -g(\Delta\theta + \Delta\varphi)$: the input $\Delta\varphi$ appears with coefficient $-g = -1$. So column 1 ($\Delta f$) is $0$, column 2 ($\Delta\varphi$) is $-1$.
+
+    - **Row 3** — $\dot{\Delta y} = \dot{\Delta y}$: no input acts here. Both columns zero.
+
+    - **Row 4** — $\ddot{\Delta y} = \frac{\Delta f}{M}$: only $\Delta f$ appears, with coefficient $\frac{1}{M} = 1$. So column 1 ($\Delta f$) is $1$, column 2 ($\Delta\varphi$) is $0$.
+
+    - **Row 5** — $\dot{\Delta\theta} = \dot{\Delta\theta}$: no input acts here. Both columns zero.
+
+    - **Row 6** — $\ddot{\Delta\theta} = -\frac{3g}{\ell}\Delta\varphi$: only $\Delta\varphi$ appears, with coefficient $-\frac{3g}{\ell} = -\frac{3}{2}$. So column 1 ($\Delta f$) is $0$, column 2 ($\Delta\varphi$) is $-\frac{3}{2}$.
+
+    ### NumPy Arrays
+
+    ```python
+    import numpy as np
+
+    A = np.array([
+        [0, 1, 0, 0,  0,   0],
+        [0, 0, 0, 0, -1,   0],
+        [0, 0, 0, 1,  0,   0],
+        [0, 0, 0, 0,  0,   0],
+        [0, 0, 0, 0,  0,   1],
+        [0, 0, 0, 0,  0,   0]
+    ], dtype=float)
+
+    B = np.array([
+        [0,    0  ],
+        [0,   -1  ],
+        [0,    0  ],
+        [1,    0  ],
+        [0,    0  ],
+        [0,   -1.5]
+    ], dtype=float)
+    ```
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## 🧩 Stability
 
     Is the generic equilibrium asymptotically stable?
     """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    L'équilibre n'est pas asymptotiquement stable.
+    En examinant les valeurs propres de la matrice du système linéarisé autour de l'équilibre, on trouve des valeurs propres nulles.
+    Or un équilibre est asymptotiquement stable si et seulement si toutes les valeurs propres ont une partie réelle strictement négative. Cette condition n'est pas satisfaite ici, donc l'équilibre n'est pas asymptotiquement stable.
+    """)
+    return
+
+
+@app.cell
+def _(A, la):
+    eigenvalues = la.eigvals(A)
+    print("Valeurs propres :", eigenvalues)
     return
 
 
