@@ -1087,87 +1087,57 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    Nous cherchons les états d’équilibre du système, où :
+    ## Analyse des équilibres
 
-    $$
-    \dot{x} = \dot{y} = \dot{\theta} = 0, \quad \ddot{x} = \ddot{y} = \ddot{\theta} = 0
-    $$
+    Pour trouver les équilibres du système avec des entrées constantes $f$ et $\varphi$, on analyse les équations différentielles en considérant toutes les variables d'état : $(x, \dot{x}, y, \dot{y}, \theta, \dot{\theta})$.
 
-    D’après les équations fournies, la dynamique du système est :
-    ### Équations du mouvement
+    Un état d'équilibre correspond à un état où toutes les dérivées sont nulles :
 
-    Le système dynamique du booster est donné par les équations suivantes :
+    $$\dot{x} = 0, \quad \ddot{x} = 0, \quad \dot{y} = 0, \quad \ddot{y} = 0, \quad \dot{\theta} = 0, \quad \ddot{\theta} = 0$$
 
-    #### Translation horizontale :
+    Équations du mouvement :
 
-    $$
-    M \ddot{x} = -f \sin(\theta + \phi)
-    $$
+    - $M\ddot{x} = -f \sin(\theta + \varphi)$
+    - $M\ddot{y} = f \cos(\theta + \varphi) - Mg$
+    - $J\ddot{\theta} = -\ell \sin(\varphi) f$
 
-    #### Translation verticale :
+    ---
 
-    $$
-    M \ddot{y} = f \cos(\theta + \phi) - Mg
-    $$
+    Étape 1 — Équation de rotation :
 
-    #### Rotation  :
+    $$J\ddot{\theta} = -\ell \sin(\varphi) f = 0 \implies \sin(\varphi) = 0 \implies \varphi = 0$$
 
-    $$
-    J \ddot{\theta} = -\ell f \sin(\phi)
-    $$
+    Car $|\varphi| < \frac{\pi}{2}$ et $f > 0$, la seule solution valide est $\varphi = 0$.
 
+    Étape 2 — Équation verticale :
 
+    $$M\ddot{y} = f\cos(\theta) - Mg = 0 \implies f\cos(\theta) = Mg$$
 
-    ### Conditions à l'équilibre
+    Car $|\theta| < \frac{\pi}{2}$ et $f > 0$, la seule solution est $\theta = 0$ et $f = Mg$.
 
-    #### 1. Équilibre horizontal
+    Étape 3 — Équation horizontale :
 
-    $$
-    \ddot{x} = 0 \Rightarrow \sin(\theta + \phi) = 0 \Rightarrow \theta + \phi = k\pi
-    $$
+    $$M\ddot{x} = -f\sin(\theta) = 0 \implies \theta = 0 \checkmark$$
 
-    Avec les contraintes \( |\theta| < \frac{\pi}{2} \) et \( |\phi| < \frac{\pi}{2} \), la seule solution acceptable est :
+    Cohérent avec l'étape 2.
 
-    $$
-    \boxed{\theta + \phi = 0}
-    \quad \Rightarrow \boxed{\phi = -\theta}
-    $$
+    Étape 4 — Conditions sur les vitesses et positions :
 
+    Les conditions $\dot{x} = 0$, $\dot{y} = 0$, $\dot{\theta} = 0$ doivent être satisfaites. Mais les équations du mouvement ne contraignent pas les positions $x$ et $y$ : n'importe quelle valeur de $x_e$ et $y_e$ est compatible avec l'équilibre.
 
-    #### 2. Équilibre vertical
+    ---
 
-    $$
-    \ddot{y} = 0 \Rightarrow f \cos(\theta + \phi) = Mg
-    $$
+    Conclusion :
 
-    En remplaçant \( \theta + \phi = 0 \) :
+    Les entrées à l'équilibre sont uniques :
 
-    $$
-    \cos(0) = 1 \Rightarrow \boxed{f = Mg}
-    $$
+    $$\varphi = 0, \quad \theta = 0, \quad f = Mg$$
 
+    Mais l'état d'équilibre n'est pas unique — il forme une famille continue paramétrée par $(x_e, y_e)$ :
 
+    $$\boxed{(x_e,\ 0,\ y_e,\ 0,\ 0,\ 0) \qquad \forall\, x_e \in \mathbb{R},\ y_e \in \mathbb{R}}$$
 
-    #### 3. Équilibre de rotation
-
-    $$
-    \ddot{\theta} = 0 \Rightarrow \sin(\phi) = 0 \Rightarrow \boxed{\phi = 0}
-    \quad \Rightarrow \boxed{\theta = 0}
-    $$
-
-
-
-
-
-    Le système possède un équilibre unique (sous les hypothèses \( f > 0 \), \( |\theta| < \frac{\pi}{2} \), \( |\phi| < \frac{\pi}{2} \)) :
-
-    $$
-    \boxed{
-    \theta = 0, \quad \phi = 0, \quad f = Mg
-    }
-    $$
-
-    Dans cet état, le booster est parfaitement vertical et la poussée est verticale vers le haut et elle compense la gravité.
+    Il existe donc une infinité d'états d'équilibre, pour toutes les positions $(x, y)$ où le booster est parfaitement vertical ($\theta = 0$), immobile ($\dot{x} = \dot{y} = \dot{\theta} = 0$), et où la poussée compense exactement la gravité ($f = Mg$, $\varphi = 0$). Les contraintes sur $\theta$ et $\varphi$ déterminent uniquement les entrées nécessaires à l'équilibre, mais pas la position où il se produit.
     """)
     return
 
