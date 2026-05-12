@@ -71,7 +71,7 @@ def _():
     import numpy as np
     import numpy.linalg as la
 
-    return np, plt, scipy
+    return la, np, plt, scipy
 
 
 @app.cell(hide_code=True)
@@ -1202,10 +1202,49 @@ def _(mo):
     ###### En introduisant les erreurs et en négligeant les termes de second ordre :
     \[
     \theta + \varphi \approx \Delta \theta + \Delta \varphi \\
-    \sin(\Delta \theta + \Delta \varphi) \approx \Delta \theta + \Delta \varphi \Rightarrow M \ddot{\Delta x} \approx -f (\Delta \theta + \Delta \varphi) \approx -Mg (\Delta \theta + \Delta \varphi) - \Delta f (\Delta \theta + \Delta \varphi) \\\Rightarrow M \ddot{\Delta x} = -Mg (\Delta \theta + \Delta \varphi)  \\
-    \cos(\theta + \varphi) \approx 1 - \frac{1}{2}(\Delta \theta + \Delta \varphi)^2 \approx 1  \Rightarrow  M \ddot{\Delta y} = \Delta f\\
-    \sin(\varphi) \approx \varphi = \Delta \varphi, \quad f \approx Mg \Rightarrow \ddot{\Delta \theta} = -\frac{3g}{\ell} \Delta \varphi
+    \sin(\Delta \theta + \Delta \varphi) \approx \Delta \theta + \Delta \varphi \Rightarrow M \ddot{\Delta x} \approx -f (\Delta \theta + \Delta \varphi) \approx -Mg (\Delta \theta + \Delta \varphi) - \Delta f (\Delta \theta + \Delta \varphi) \\
+    \cos(\theta + \varphi) \approx 1 - \frac{1}{2}(\Delta \theta + \Delta \varphi)^2 \approx 1 \\
+    \sin(\varphi) \approx \varphi = \Delta \varphi, \quad f \approx Mg
     \]
+
+
+    *Correction pour la rotation:*
+    $$
+    J \ddot{\theta} = -\ell (f_e + \Delta f) \sin(\phi_e + \Delta \phi)
+    $$
+
+    Avec :
+
+    $$
+    \sin(\phi_e + \Delta \phi) \approx \sin \phi_e + \cos \phi_e \Delta \phi
+    $$
+
+    Alors :
+
+    $$
+    \begin{aligned}
+    J \ddot{\theta} &\approx -\ell (f_e + \Delta f)(\sin \phi_e + \cos \phi_e \Delta \phi) \\
+    J \Delta \ddot{\theta} &\approx -\ell f_e \cos \phi_e \Delta \phi - \ell \sin \phi_e \Delta f
+    \end{aligned}
+    $$
+
+    (On utilise : $J \ddot{\theta}_e = -\ell f_e \sin \phi_e = 0$)
+
+
+    Si l'équilibre est tel que:
+
+    $$
+    \theta_{\text{eq}} = 0, \quad \phi_{\text{eq}} = 0, \quad f_{\text{eq}} = Mg,
+    $$
+
+    donc les équations deviennent:
+
+    $$
+    \begin{cases}
+    \Delta \ddot{x} = -g (\Delta \theta + \Delta \phi),\Delta \ddot{y} = \dfrac{\Delta f}{M}, \\
+    \Delta \ddot{\theta} = -\dfrac{M \ell g}{J} \Delta \phi.
+    \end{cases}
+    $$
     """)
     return
 
@@ -1295,7 +1334,7 @@ def _(mo):
     0 & 0 \\
     1 & 0 \\
     0 & 0 \\
-    0 & -6
+    0 & -\frac{3}{2}
     \end{bmatrix}
     $$
 
@@ -1311,9 +1350,7 @@ def _(mo):
 
     - **Row 5** — $\dot{\Delta\theta} = \dot{\Delta\theta}$: no input acts here. Both columns zero.
 
-    - **Row 6** — $\ddot{\Delta\theta} = -\frac{\ell \cdot Mg}{J}\Delta\varphi = -\frac{12g}{\ell}\Delta\varphi$: only $\Delta\varphi$ appears. With $g=1$ and $\ell=2$, the coefficient is $-\frac{12 \times 1}{2} = -6$. So column 1 ($\Delta f$) is $0$, column 2 ($\Delta\varphi$) is $-6$.
-    """)
-    return
+    - **Row 6** — $\ddot{\Delta\theta} = -\frac{3g}{\ell}\Delta\varphi$: only $\Delta\varphi$ appears, with coefficient $-\frac{3g}{\ell} = -\frac{3}{2}$. So column 1 ($\Delta f$) is $0$, column 2 ($\Delta\varphi$) is $-\frac{3}{2}$.
 
 
 @app.cell
@@ -1333,9 +1370,33 @@ def _(np):
         [0,    0  ],
         [1,    0  ],
         [0,    0  ],
-        [0,   -6]
+        [0,   -1.5]
     ], dtype=float)
     return A, B
+
+
+@app.cell
+def _(np):
+
+    A = np.array([
+        [0, 1, 0, 0,  0,   0],
+        [0, 0, 0, 0, -1,   0],
+        [0, 0, 0, 1,  0,   0],
+        [0, 0, 0, 0,  0,   0],
+        [0, 0, 0, 0,  0,   1],
+        [0, 0, 0, 0,  0,   0]
+    ], dtype=float)
+
+    B = np.array([
+        [0,    0  ],
+        [0,   -1  ],
+        [0,    0  ],
+        [1,    0  ],
+        [0,    0  ],
+        [0,   -1.5]
+    ], dtype=float)
+
+    return (A,)
 
 
 @app.cell(hide_code=True)
@@ -1345,6 +1406,23 @@ def _(mo):
 
     Is the generic equilibrium asymptotically stable?
     """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    L'équilibre n'est pas asymptotiquement stable.
+    En examinant les valeurs propres de la matrice du système linéarisé autour de l'équilibre, on trouve des valeurs propres nulles.
+    Or un équilibre est asymptotiquement stable si et seulement si toutes les valeurs propres ont une partie réelle strictement négative. Cette condition n'est pas satisfaite ici, donc l'équilibre n'est pas asymptotiquement stable.
+    """)
+    return
+
+
+@app.cell
+def _(A, la):
+    eigenvalues = la.eigvals(A)
+    print("Valeurs propres :", eigenvalues)
     return
 
 
