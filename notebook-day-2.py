@@ -1312,12 +1312,12 @@ def _(mo):
     - **Row 5** — $\dot{\Delta\theta} = \dot{\Delta\theta}$: no input acts here. Both columns zero.
 
     - **Row 6** — $\ddot{\Delta\theta} = -\frac{\ell \cdot Mg}{J}\Delta\varphi = -\frac{12g}{\ell}\Delta\varphi$: only $\Delta\varphi$ appears. With $g=1$ and $\ell=2$, the coefficient is $-\frac{12 \times 1}{2} = -6$. So column 1 ($\Delta f$) is $0$, column 2 ($\Delta\varphi$) is $-6$.
+    """)
+    return
 
-    ### NumPy Arrays
 
-    ```python
-    import numpy as np
-
+@app.cell
+def _(np):
     A = np.array([
         [0, 1, 0, 0,  0,   0],
         [0, 0, 0, 0, -1,   0],
@@ -1335,9 +1335,7 @@ def _(mo):
         [0,    0  ],
         [0,   -6]
     ], dtype=float)
-    ```
-    """)
-    return
+    return A, B
 
 
 @app.cell(hide_code=True)
@@ -1360,8 +1358,32 @@ def _(mo):
     return
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    To check controllability, we use the Kalman controllability matrix:
+
+    $$\mathcal{C} = \begin{bmatrix} B & AB & A^2B & A^3B & A^4B & A^5B \end{bmatrix}$$
+
+    The system is controllable if and only if $\text{rank}(\mathcal{C}) = 6$.
+
+    Using python, we calculate the rank:
+    """)
+    return
+
+
 @app.cell
-def _():
+def _(A, B, np):
+    C = np.hstack([np.linalg.matrix_power(A, i) @ B for i in range(6)])
+    print("Rank of controllability matrix:", np.linalg.matrix_rank(C))
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    We find $\text{rank}(\mathcal{C}) = 6$, which means that the system is indeed controllable.
+    """)
     return
 
 
