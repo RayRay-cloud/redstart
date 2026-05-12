@@ -1202,49 +1202,10 @@ def _(mo):
     ###### En introduisant les erreurs et en négligeant les termes de second ordre :
     \[
     \theta + \varphi \approx \Delta \theta + \Delta \varphi \\
-    \sin(\Delta \theta + \Delta \varphi) \approx \Delta \theta + \Delta \varphi \Rightarrow M \ddot{\Delta x} \approx -f (\Delta \theta + \Delta \varphi) \approx -Mg (\Delta \theta + \Delta \varphi) - \Delta f (\Delta \theta + \Delta \varphi) \\
-    \cos(\theta + \varphi) \approx 1 - \frac{1}{2}(\Delta \theta + \Delta \varphi)^2 \approx 1 \\
-    \sin(\varphi) \approx \varphi = \Delta \varphi, \quad f \approx Mg
+    \sin(\Delta \theta + \Delta \varphi) \approx \Delta \theta + \Delta \varphi \Rightarrow M \ddot{\Delta x} \approx -f (\Delta \theta + \Delta \varphi) \approx -Mg (\Delta \theta + \Delta \varphi) - \Delta f (\Delta \theta + \Delta \varphi) \\\Rightarrow M \ddot{\Delta x} = -Mg (\Delta \theta + \Delta \varphi)  \\
+    \cos(\theta + \varphi) \approx 1 - \frac{1}{2}(\Delta \theta + \Delta \varphi)^2 \approx 1  \Rightarrow  M \ddot{\Delta y} = \Delta f\\
+    \sin(\varphi) \approx \varphi = \Delta \varphi, \quad f \approx Mg \Rightarrow \ddot{\Delta \theta} = -\frac{3g}{\ell} \Delta \varphi
     \]
-
-
-    *Correction pour la rotation:*
-    $$
-    J \ddot{\theta} = -\ell (f_e + \Delta f) \sin(\phi_e + \Delta \phi)
-    $$
-
-    Avec :
-
-    $$
-    \sin(\phi_e + \Delta \phi) \approx \sin \phi_e + \cos \phi_e \Delta \phi
-    $$
-
-    Alors :
-
-    $$
-    \begin{aligned}
-    J \ddot{\theta} &\approx -\ell (f_e + \Delta f)(\sin \phi_e + \cos \phi_e \Delta \phi) \\
-    J \Delta \ddot{\theta} &\approx -\ell f_e \cos \phi_e \Delta \phi - \ell \sin \phi_e \Delta f
-    \end{aligned}
-    $$
-
-    (On utilise : $J \ddot{\theta}_e = -\ell f_e \sin \phi_e = 0$)
-
-
-    Si l'équilibre est tel que:
-
-    $$
-    \theta_{\text{eq}} = 0, \quad \phi_{\text{eq}} = 0, \quad f_{\text{eq}} = Mg,
-    $$
-
-    donc les équations deviennent:
-
-    $$
-    \begin{cases}
-    \Delta \ddot{x} = -g (\Delta \theta + \Delta \phi),\Delta \ddot{y} = \dfrac{\Delta f}{M}, \\
-    \Delta \ddot{\theta} = -\dfrac{M \ell g}{J} \Delta \phi.
-    \end{cases}
-    $$
     """)
     return
 
@@ -1416,6 +1377,11 @@ def _(mo):
     return
 
 
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+=======
+>>>>>>> ee5dd11b4945937472fcbd7efb6580e7129c60e3
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -1427,6 +1393,24 @@ def _(mo):
 
     Using python, we calculate the rank:
     """)
+<<<<<<< HEAD
+=======
+    return
+
+
+@app.cell
+def _(A, B, np):
+    C = np.hstack([np.linalg.matrix_power(A, i) @ B for i in range(6)])
+    print("Rank of controllability matrix:", np.linalg.matrix_rank(C))
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    We find $\text{rank}(\mathcal{C}) = 6$, which means that the system is indeed controllable.
+    """)
+>>>>>>> ee5dd11b4945937472fcbd7efb6580e7129c60e3
     return
 
 
@@ -1445,6 +1429,7 @@ def _(mo):
     return
 
 
+>>>>>>> ee5dd11b4945937472fcbd7efb6580e7129c60e3
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -1455,6 +1440,83 @@ def _(mo):
     - What are the new (reduced) matrices $A$ and $B$ for this reduced system?
 
     - Check the controllability of this new system.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Matrices réduites
+
+    On garde uniquement l'état $(\Delta x, \Delta\dot{x}, \Delta\theta, \Delta\dot{\theta})$ et on fixe $f = Mg$, donc $\Delta f = 0$. L'unique entrée est $\Delta\phi$.
+
+    Les équations qui nous intéressent deviennent :
+
+    $$\ddot{\Delta x} = -g(\Delta\theta + \Delta\phi)$$
+    $$\ddot{\Delta\theta} = -\frac{3g}{\ell}\,\Delta\phi$$
+
+    On obtient donc :
+
+    $$
+    A_{red} = \begin{bmatrix}
+    0 & 1 & 0 & 0 \\
+    0 & 0 & -g & 0 \\
+    0 & 0 & 0 & 1 \\
+    0 & 0 & 0 & 0
+    \end{bmatrix}, \qquad
+    B_{red} = \begin{bmatrix}
+    0 \\ -1 \\ 0 \\ -\frac{3}{2}
+    \end{bmatrix}
+    $$
+    """)
+    return
+
+
+@app.cell
+def _(g, l, np):
+
+
+    A_lat = np.array([
+        [0, 1,  0, 0],
+        [0, 0, -g, 0],
+        [0, 0,  0, 1],
+        [0, 0,  0, 0]
+    ], dtype=float)
+
+    B_lat = np.array([
+        [0],
+        [-g],
+        [0],
+        [-3*g/l]
+    ], dtype=float)
+
+    # Controllability matrix
+    C_lat = np.hstack([np.linalg.matrix_power(A_lat, k) @ B_lat for k in range(4)])
+    print("Controllability matrix:\n", C_lat)
+    print("\nRank:", np.linalg.matrix_rank(C_lat))
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Contrôlabilité
+
+    La matrice de contrôlabilité est $\mathcal{C} = [B \;|\; AB \;|\; A^2B \;|\; A^3B] \in \mathbb{R}^{4\times 4}$ :
+
+    $$
+    \mathcal{C} = \begin{bmatrix}
+    0 & -1 & 0 & 3/2 \\
+    -1 & 0 & 3/2 & 0 \\
+    0 & -3/2 & 0 & 0 \\
+    -3/2 & 0 & 0 & 0
+    \end{bmatrix}
+    $$
+
+    Son déterminant est non nul ($\det(\mathcal{C}) = -\frac{81}{16} \neq 0$), donc :
+
+    $$\boxed{\text{rang}(\mathcal{C}) = 4 \implies \text{le système réduit est contrôlable}}$$
     """)
     return
 
