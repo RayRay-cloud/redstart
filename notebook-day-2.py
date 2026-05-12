@@ -1406,13 +1406,6 @@ def _(mo):
     return
 
 
-@app.cell
-def _(A, B, np):
-    C = np.hstack([np.linalg.matrix_power(A, i) @ B for i in range(6)])
-    print("Rank of controllability matrix:", np.linalg.matrix_rank(C))
-    return
-
-
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
