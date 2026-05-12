@@ -1287,9 +1287,11 @@ def _(mo):
     $$
     \ddot{\Delta x} = -g(\Delta \theta + \Delta \varphi)
     $$
+
     $$
     \ddot{\Delta y} = \frac{\Delta f}{M}
     $$
+
     $$
     \ddot{\Delta\theta} = -\frac{\ell \cdot Mg}{J}\Delta\varphi
     $$
@@ -1351,7 +1353,8 @@ def _(mo):
     - **Row 5** — $\dot{\Delta\theta} = \dot{\Delta\theta}$: no input acts here. Both columns zero.
 
     - **Row 6** — $\ddot{\Delta\theta} = -\frac{3g}{\ell}\Delta\varphi$: only $\Delta\varphi$ appears, with coefficient $-\frac{3g}{\ell} = -\frac{3}{2}$. So column 1 ($\Delta f$) is $0$, column 2 ($\Delta\varphi$) is $-\frac{3}{2}$.
-
+    """)
+    return
 
 @app.cell
 def _(np):
