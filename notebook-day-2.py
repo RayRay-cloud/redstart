@@ -1186,6 +1186,33 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    ###### Introduisons les erreurs et en utilisant lex expressions obtenues de la dernière question :
+    \[ 	\Delta \theta = \theta - 0 = \theta, \quad \theta_{eq} =0\\ \]
+    \[  \Delta f = f - Mg  \quad f_{eq} =Mg \\ \]
+    \[    \Delta \varphi = \varphi - 0 = \varphi \quad \varphi_{eq} =0\\	\]
+    \[   \Delta x = x - x_{eq}\\
+    	\Delta y = y - y_{eq}
+    \]
+    ###### On a :
+    \[
+    M \ddot{x} = -f \sin(\theta + \varphi) \\
+    M\ddot{y} = f \cos(\theta + \varphi) - Mg \\
+    \ddot{\theta} = -\ell f \sin(\varphi)
+    \]
+    ###### En introduisant les erreurs et en négligeant les termes de second ordre :
+    \[
+    \theta + \varphi \approx \Delta \theta + \Delta \varphi \\
+    \sin(\Delta \theta + \Delta \varphi) \approx \Delta \theta + \Delta \varphi \Rightarrow M \ddot{\Delta x} \approx -f (\Delta \theta + \Delta \varphi) \approx -Mg (\Delta \theta + \Delta \varphi) - \Delta f (\Delta \theta + \Delta \varphi) \\\Rightarrow M \ddot{\Delta x} = -Mg (\Delta \theta + \Delta \varphi)  \\
+    \cos(\theta + \varphi) \approx 1 - \frac{1}{2}(\Delta \theta + \Delta \varphi)^2 \approx 1  \Rightarrow  M \ddot{\Delta y} = \Delta f\\
+    \sin(\varphi) \approx \varphi = \Delta \varphi, \quad f \approx Mg \Rightarrow \ddot{\Delta \theta} = -\frac{3g}{\ell} \Delta \varphi
+    \]
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## 🧩 Standard Form
 
     1. What are the matrices $A$ and $B$ associated to this linear model in standard form?
@@ -1211,6 +1238,11 @@ def _(mo):
 
     Is the linearized model controllable?
     """)
+    return
+
+
+@app.cell
+def _():
     return
 
 
