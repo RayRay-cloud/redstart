@@ -1149,58 +1149,63 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ###### Introduisons les erreurs et en utilisant les expressions obtenues de la dernière question :
-    \[ \Delta \theta = \theta - 0 = \theta, \quad \theta_{eq} =0 \]
-    \[ \Delta f = f - Mg \quad f_{eq} =Mg \]
-    \[ \Delta \varphi = \varphi - 0 = \varphi \quad \varphi_{eq} =0 \]
-    \[ \Delta x = x - x_{eq}, \quad \Delta y = y - y_{eq} \]
-
+    ###### Introduisons les erreurs et en utilisant lex expressions obtenues de la dernière question :
+    \[ 	\Delta \theta = \theta - 0 = \theta, \quad \theta_{eq} =0\\ \]
+    \[  \Delta f = f - Mg  \quad f_{eq} =Mg \\ \]
+    \[    \Delta \varphi = \varphi - 0 = \varphi \quad \varphi_{eq} =0\\	\]
+    \[   \Delta x = x - x_{eq}\\
+    	\Delta y = y - y_{eq}
+    \]
     ###### On a :
     \[
     M \ddot{x} = -f \sin(\theta + \varphi) \\
     M\ddot{y} = f \cos(\theta + \varphi) - Mg \\
-    J\ddot{\theta} = -\frac{\ell}{2} f \sin(\varphi)
+    \ddot{\theta} = -\ell f \sin(\varphi)
     \]
-
     ###### En introduisant les erreurs et en négligeant les termes de second ordre :
     \[
     \theta + \varphi \approx \Delta \theta + \Delta \varphi \\
-    \sin(\Delta \theta + \Delta \varphi) \approx \Delta \theta + \Delta \varphi \Rightarrow M \ddot{\Delta x} \approx -Mg (\Delta \theta + \Delta \varphi) \\
-    \cos(\theta + \varphi) \approx 1 \Rightarrow M \ddot{\Delta y} = \Delta f \\
-    \sin(\varphi) \approx \Delta \varphi, \quad f \approx Mg
+    \sin(\Delta \theta + \Delta \varphi) \approx \Delta \theta + \Delta \varphi \Rightarrow M \ddot{\Delta x} \approx -f (\Delta \theta + \Delta \varphi) \approx -Mg (\Delta \theta + \Delta \varphi) - \Delta f (\Delta \theta + \Delta \varphi) \\
+    \cos(\theta + \varphi) \approx 1 - \frac{1}{2}(\Delta \theta + \Delta \varphi)^2 \approx 1 \\
+    \sin(\varphi) \approx \varphi = \Delta \varphi, \quad f \approx Mg
     \]
+
 
     *Correction pour la rotation:*
     $$
-    J \ddot{\theta} = -\frac{\ell}{2} (f_e + \Delta f) \sin(\phi_e + \Delta \phi)
+    J \ddot{\theta} = -\ell (f_e + \Delta f) \sin(\phi_e + \Delta \phi)
     $$
 
     Avec :
+
     $$
     \sin(\phi_e + \Delta \phi) \approx \sin \phi_e + \cos \phi_e \Delta \phi
     $$
 
     Alors :
+
     $$
     \begin{aligned}
-    J \ddot{\theta} &\approx -\frac{\ell}{2} (f_e + \Delta f)(\sin \phi_e + \cos \phi_e \Delta \phi) \\
-    J \Delta \ddot{\theta} &\approx -\frac{\ell}{2} f_e \cos \phi_e \Delta \phi - \frac{\ell}{2} \sin \phi_e \Delta f
+    J \ddot{\theta} &\approx -\ell (f_e + \Delta f)(\sin \phi_e + \cos \phi_e \Delta \phi) \\
+    J \Delta \ddot{\theta} &\approx -\ell f_e \cos \phi_e \Delta \phi - \ell \sin \phi_e \Delta f
     \end{aligned}
     $$
 
-    (On utilise : $J \ddot{\theta}_e = -\frac{\ell}{2} f_e \sin \phi_e = 0$)
+    (On utilise : $J \ddot{\theta}_e = -\ell f_e \sin \phi_e = 0$)
 
-    Si l'équilibre est tel que :
+
+    Si l'équilibre est tel que:
+
     $$
     \theta_{\text{eq}} = 0, \quad \phi_{\text{eq}} = 0, \quad f_{\text{eq}} = Mg,
     $$
 
-    donc les équations linéarisées deviennent :
+    donc les équations deviennent:
+
     $$
     \begin{cases}
-    \Delta \ddot{x} = -g (\Delta \theta + \Delta \phi) \\
-    \Delta \ddot{y} = \dfrac{\Delta f}{M} \\
-    \Delta \ddot{\theta} = -\dfrac{\ell \cdot Mg}{2J} \Delta \phi
+    \Delta \ddot{x} = -g (\Delta \theta + \Delta \phi),\Delta \ddot{y} = \dfrac{\Delta f}{M}, \\
+    \Delta \ddot{\theta} = -\dfrac{M \ell g}{J} \Delta \phi.
     \end{cases}
     $$
     """)
@@ -1435,8 +1440,9 @@ def _(mo):
     Les équations qui nous intéressent deviennent :
 
     $$\ddot{\Delta x} = -g(\Delta\theta + \Delta\phi)$$
-    $$\ddot{\Delta\theta} = -\frac{\ell \cdot Mg}{J}\Delta\varphi$$
-
+    $$
+    \ddot{\Delta\theta} = -\frac{\ell \cdot Mg}{2J}\Delta\varphi
+    $$
     On obtient donc :
 
     $$
@@ -1447,7 +1453,7 @@ def _(mo):
     0 & 0 & 0 & 0
     \end{bmatrix}, \qquad
     B_{red} = \begin{bmatrix}
-    0 \\ -1 \\ 0 \\ -\frac{3}{2}
+    0 \\ -1 \\ 0 \\ -3
     \end{bmatrix}
     $$
     """)
@@ -1455,7 +1461,9 @@ def _(mo):
 
 
 @app.cell
-def _(J, M, g, l, np):
+def _(g, np):
+
+
     A_lat = np.array([
         [0, 1,  0, 0],
         [0, 0, -g, 0],
@@ -1467,7 +1475,7 @@ def _(J, M, g, l, np):
         [0],
         [-g],
         [0],
-        [-l*M*g/J]
+        [-3]
     ], dtype=float)
 
     # Controllability matrix
@@ -1486,14 +1494,15 @@ def _(mo):
 
     $$
     \mathcal{C} = \begin{bmatrix}
-    0 & -1 & 0 & 3/2 \\
-    -1 & 0 & 3/2 & 0 \\
-    0 & -3/2 & 0 & 0 \\
-    -3/2 & 0 & 0 & 0
+    0  & -1  & 0   & 3 \\
+    -1 &  0  & 3  & 0  \\
+    0  & -3  & 0   & 0  \\
+    -3 &  0  & 0   & 0
     \end{bmatrix}
     $$
 
-    Son déterminant est non nul ($\det(\mathcal{C}) = -\frac{81}{16} \neq 0$), donc :
+    Son déterminant est non nul ($\det(\mathcal{C}) = 81
+    \neq 0$), donc :
 
     $$\boxed{\text{rang}(\mathcal{C}) = 4 \implies \text{le système réduit est contrôlable}}$$
     """)
