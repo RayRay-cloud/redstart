@@ -1092,27 +1092,32 @@ def _(mo):
     Pour trouver les équilibres du système avec des entrées constantes $f$ et $\varphi$, on analyse les équations différentielles en considérant toutes les variables d'état : $(x, \dot{x}, y, \dot{y}, \theta, \dot{\theta})$.
 
     Un état d'équilibre correspond à un état où toutes les dérivées sont nulles :
+
     $$\dot{x} = 0, \quad \ddot{x} = 0, \quad \dot{y} = 0, \quad \ddot{y} = 0, \quad \dot{\theta} = 0, \quad \ddot{\theta} = 0$$
 
     Équations du mouvement :
+
     - $M\ddot{x} = -f \sin(\theta + \varphi)$
     - $M\ddot{y} = f \cos(\theta + \varphi) - Mg$
-    - $J\ddot{\theta} = -\dfrac{\ell}{2} \sin(\varphi)\, f$
+    - $J\ddot{\theta} = -\ell \sin(\varphi) f$
 
     ---
 
     Étape 1 — Équation de rotation :
-    $$J\ddot{\theta} = -\frac{\ell}{2} \sin(\varphi)\, f = 0 \implies \sin(\varphi) = 0 \implies \varphi = 0$$
 
-    Car $|\varphi| < \dfrac{\pi}{2}$ et $f > 0$, la seule solution valide est $\varphi = 0$.
+    $$J\ddot{\theta} = -\ell \sin(\varphi) f = 0 \implies \sin(\varphi) = 0 \implies \varphi = 0$$
+
+    Car $|\varphi| < \frac{\pi}{2}$ et $f > 0$, la seule solution valide est $\varphi = 0$.
 
     Étape 2 — Équation verticale :
+
     $$M\ddot{y} = f\cos(\theta) - Mg = 0 \implies f\cos(\theta) = Mg$$
 
-    Car $|\theta| < \dfrac{\pi}{2}$ et $f > 0$, la seule solution est $\theta = 0$ et $f = Mg$.
+    Car $|\theta| < \frac{\pi}{2}$ et $f > 0$, la seule solution est $\theta = 0$ et $f = Mg$.
 
     Étape 3 — Équation horizontale :
-    $$M\ddot{x} = -f\sin(\theta) = 0 \implies \theta = 0 $$
+
+    $$M\ddot{x} = -f\sin(\theta) = 0 \implies \theta = 0 \checkmark$$
 
     Cohérent avec l'étape 2.
 
@@ -1125,9 +1130,11 @@ def _(mo):
     Conclusion :
 
     Les entrées à l'équilibre sont uniques :
+
     $$\varphi = 0, \quad \theta = 0, \quad f = Mg$$
 
     Mais l'état d'équilibre n'est pas unique — il forme une famille continue paramétrée par $(x_e, y_e)$ :
+
     $$\boxed{(x_e,\ 0,\ y_e,\ 0,\ 0,\ 0) \qquad \forall\, x_e \in \mathbb{R},\ y_e \in \mathbb{R}}$$
 
     Il existe donc une infinité d'états d'équilibre, pour toutes les positions $(x, y)$ où le booster est parfaitement vertical ($\theta = 0$), immobile ($\dot{x} = \dot{y} = \dot{\theta} = 0$), et où la poussée compense exactement la gravité ($f = Mg$, $\varphi = 0$). Les contraintes sur $\theta$ et $\varphi$ déterminent uniquement les entrées nécessaires à l'équilibre, mais pas la position où il se produit.
@@ -1224,6 +1231,7 @@ def _(mo):
     ## Matrices A and B — Construction and Explanation
 
     ### State and Input Vectors
+
     $$
     \mathbf{x} = \begin{bmatrix}
     \Delta x \\
@@ -1240,14 +1248,17 @@ def _(mo):
     $$
 
     ### Linearized Equations (from previous question)
+
     $$
     \ddot{\Delta x} = -g(\Delta \theta + \Delta \varphi)
     $$
+
     $$
     \ddot{\Delta y} = \frac{\Delta f}{M}
     $$
+
     $$
-    \ddot{\Delta\theta} = -\frac{\ell \cdot Mg}{2J}\Delta\varphi
+    \ddot{\Delta\theta} = -\frac{\ell \cdot Mg}{J}\Delta\varphi
     $$
 
     ### Matrix A
@@ -1266,6 +1277,7 @@ def _(mo):
     \end{bmatrix}
     $$
 
+
     $$
     A = \begin{bmatrix}
     0 & 1 & 0 & 0 & 0 & 0 \\
@@ -1278,17 +1290,22 @@ def _(mo):
     $$
 
     Reading row by row:
+
     - **Row 1** — $\dot{\Delta x} = \dot{\Delta x}$: the derivative of position is velocity. So coefficient $+1$ on $\dot{\Delta x}$ (column 2), zeros elsewhere.
+
     - **Row 2** — $\ddot{\Delta x} = -g\,\Delta\theta$: the only state-dependent term is $-g\Delta\theta$ (the $\Delta\varphi$ part goes into $B$ since it is an input). So coefficient $-g = -1$ on $\Delta\theta$ (column 5), zeros elsewhere.
+
     - **Row 3** — $\dot{\Delta y} = \dot{\Delta y}$: same kinematic identity as row 1 but for $y$. Coefficient $+1$ on $\dot{\Delta y}$ (column 4), zeros elsewhere.
+
     - **Row 4** — $\ddot{\Delta y} = \frac{\Delta f}{M}$: this depends **only** on the input $\Delta f$, not on any state. So this row is **all zeros** in $A$.
+
     - **Row 5** — $\dot{\Delta \theta} = \dot{\Delta \theta}$: same as row 1. Coefficient $+1$ on $\dot{\Delta\theta}$ (column 6), zeros elsewhere.
-    - **Row 6** — $\ddot{\Delta\theta} = -\frac{\ell \cdot Mg}{2J}\Delta\varphi$: this depends **only** on the input $\Delta\varphi$, not on any state. So this row is **all zeros** in $A$.
+
+    - **Row 6** — $\ddot{\Delta\theta} = -\frac{\ell \cdot Mg}{J}\Delta\varphi$: this depends **only** on the input $\Delta\varphi$, not on any state. So this row is **all zeros** in $A$.
 
     ### Matrix B
 
     $B$ captures how the **inputs** $\mathbf{u} = (\Delta f,\ \Delta\varphi)^T$ influence $\dot{\mathbf{x}}$.
-
     $$
     B =
     \begin{bmatrix}
@@ -1297,10 +1314,9 @@ def _(mo):
     0 & 0\\
     1/M & 0\\
     0 & 0 \\
-    0 & -M g \ell/(2J)\\
+    0 & -M g \ell/J\\
     \end{bmatrix}
     $$
-
     $$
     B = \begin{bmatrix}
     0 & 0 \\
@@ -1308,17 +1324,24 @@ def _(mo):
     0 & 0 \\
     1 & 0 \\
     0 & 0 \\
-    0 & -3
+    0 & -6
     \end{bmatrix}
     $$
 
     Reading row by row:
+
     - **Row 1** — $\dot{\Delta x} = \dot{\Delta x}$: no input acts here. Both columns zero.
+
     - **Row 2** — $\ddot{\Delta x} = -g(\Delta\theta + \Delta\varphi)$: the input $\Delta\varphi$ appears with coefficient $-g = -1$. So column 1 ($\Delta f$) is $0$, column 2 ($\Delta\varphi$) is $-1$.
+
     - **Row 3** — $\dot{\Delta y} = \dot{\Delta y}$: no input acts here. Both columns zero.
+
     - **Row 4** — $\ddot{\Delta y} = \frac{\Delta f}{M}$: only $\Delta f$ appears, with coefficient $\frac{1}{M} = 1$. So column 1 ($\Delta f$) is $1$, column 2 ($\Delta\varphi$) is $0$.
+
     - **Row 5** — $\dot{\Delta\theta} = \dot{\Delta\theta}$: no input acts here. Both columns zero.
-    - **Row 6** — $\ddot{\Delta\theta} = -\frac{\ell \cdot Mg}{2J}\Delta\varphi$: only $\Delta\varphi$ appears, with coefficient $-Mg\ell/(2J) = -3$. So column 1 ($\Delta f$) is $0$, column 2 ($\Delta\varphi$) is $-3$.
+
+    - **Row 6** —
+    $\ddot{\Delta\theta} = -\frac{\ell \cdot Mg}{J}\Delta\varphi$: only $\Delta\varphi$ appears, with coefficient $-M g \ell/J= -6$. So column 1 ($\Delta f$) is $0$, column 2 ($\Delta\varphi$) is $-6$.
     """)
     return
 
@@ -1340,7 +1363,7 @@ def _(np):
         [0,    0  ],
         [1,    0  ],
         [0,    0  ],
-        [0,   -3]
+        [0,   -6]
     ], dtype=float)
     return A, B
 
@@ -1518,10 +1541,8 @@ def _(mo):
 def _(A_lat, np, plt):
     from scipy.linalg import expm
 
-
     # Condition initiale : x(0)=0, dx(0)=0, theta(0)=pi/4, dtheta(0)=0
     z0 = np.array([0, 0, np.pi/4, 0])
-
     t = np.linspace(0, 20, 1000)
 
     # Solution via exponentielle de matrice
@@ -1532,12 +1553,17 @@ def _(A_lat, np, plt):
     axes[0].plot(t, Z[:, 0], label=r"$x(t)$")
     axes[0].set_title("Position latérale $x(t)$")
     axes[0].set_xlabel("temps $t$")
+    axes[0].set_ylabel("$x$ (m)")
+    axes[0].yaxis.set_major_formatter(plt.FormatStrFormatter('%.2f'))
     axes[0].grid(True)
     axes[0].legend()
 
     axes[1].plot(t, Z[:, 2], label=r"$\theta(t)$", color="orange")
     axes[1].set_title("Angle d'inclinaison $\\theta(t)$")
     axes[1].set_xlabel("temps $t$")
+    axes[1].set_ylabel(r"$\theta$ (rad)")
+    axes[1].set_ylim(0, np.pi/2)  # de 0 à pi/2 pour bien voir theta constant à pi/4
+    axes[1].yaxis.set_major_formatter(plt.FormatStrFormatter('%.2f'))
     axes[1].grid(True)
     axes[1].legend()
 
