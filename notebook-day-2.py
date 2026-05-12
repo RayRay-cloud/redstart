@@ -2321,5 +2321,53 @@ def _(mo):
     return
 
 
+@app.cell
+def _(K_pp, M, booster_anim, g, mo, np, redstart_solve, world):
+    def anim_pp():
+        t_span = [0.0, 10.0]
+        y0 = [0.0, 0.0, 10.0, 0.0, np.pi / 4, 0.0]
+        def f_phi_pp(t, state):
+            x, vx, y, vy, theta, omega = state
+            xi_lat = np.array([x, vx, theta, omega])
+            dphi = (-(K_pp @ xi_lat)).item()
+            dphi = np.clip(dphi, -np.pi/2, np.pi/2)
+            return np.array([M * g, dphi])
+        sol = redstart_solve(t_span, y0, f_phi_pp)
+        return mo.Html(world(
+            [-5, 5, -2, 14],
+            booster_anim(
+                lambda t: sol(t)[0], lambda t: sol(t)[2], lambda t: sol(t)[4],
+                lambda t: f_phi_pp(t, sol(t))[0], lambda t: f_phi_pp(t, sol(t))[1],
+                T=t_span[1]
+            )
+        )).center()
+    mo.vstack([mo.md("**Pole Placement :**"), anim_pp()])
+    return
+
+
+@app.cell
+def _(K_oc, M, booster_anim, g, mo, np, redstart_solve, world):
+    def anim_oc():
+        t_span = [0.0, 10.0]
+        y0 = [0.0, 0.0, 10.0, 0.0, np.pi / 4, 0.0]
+        def f_phi_oc(t, state):
+            x, vx, y, vy, theta, omega = state
+            xi_lat = np.array([x, vx, theta, omega])
+            dphi = (-(K_oc @ xi_lat)).item()
+            dphi = np.clip(dphi, -np.pi/2, np.pi/2)
+            return np.array([M * g, dphi])
+        sol = redstart_solve(t_span, y0, f_phi_oc)
+        return mo.Html(world(
+            [-5, 5, -2, 14],
+            booster_anim(
+                lambda t: sol(t)[0], lambda t: sol(t)[2], lambda t: sol(t)[4],
+                lambda t: f_phi_oc(t, sol(t))[0], lambda t: f_phi_oc(t, sol(t))[1],
+                T=t_span[1]
+            )
+        )).center()
+    mo.vstack([mo.md("**LQR Optimal Control**"), anim_oc()])
+    return
+
+
 if __name__ == "__main__":
     app.run()
