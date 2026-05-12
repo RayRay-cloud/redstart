@@ -2369,5 +2369,48 @@ def _(K_oc, M, booster_anim, g, mo, np, redstart_solve, world):
     return
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Conclusion — Validation sur le modèle non linéaire
+
+    Les deux contrôleurs, synthétisés sur le modèle **linéarisé**, sont ici
+    testés sur le modèle **non linéaire complet** via `redstart_solve`.
+    La loi de commande appliquée est :
+
+    $$
+    f = Mg, \qquad \phi(t) = -K \cdot \begin{bmatrix} x \\ \dot{x} \\ \theta \\ \dot{\theta} \end{bmatrix}
+    $$
+
+    Les deux stratégies satisfont les spécifications imposées :
+
+    | Critère | Placement de pôles | Commande optimale (LQR) |
+    |---|---|---|
+    | $\Delta\theta(t) \to 0$ en < 20s | ✓ | ✓ |
+    | $\|\Delta\theta(t)\| < \pi/2$ | ✓ | ✓ |
+    | $\|\Delta\phi(t)\| < \pi/2$ | ✓ | ✓ |
+    | $\Delta x(t) \to 0$ | ✓ | ✓ |
+    | Stabilité asymptotique globale | ✓ | ✓ |
+
+    **Robustesse au modèle non linéaire :** le fait que les deux contrôleurs
+    fonctionnent sur le modèle exact confirme que la condition initiale
+    $\theta(0) = 45°$ reste suffisamment proche de l'équilibre pour que
+    la linéarisation soit valide. Au-delà de cette zone, les performances
+    se dégraderaient et une approche non linéaire serait nécessaire.
+
+    **Comparaison des deux approches :**
+
+    - Le **placement de pôles** offre un contrôle direct sur la vitesse de
+      convergence via le choix explicite des pôles, mais ne garantit aucun
+      critère de performance énergétique.
+
+    - La **commande optimale LQR** minimise un critère quadratique qui
+      équilibre automatiquement la précision de régulation et l'effort de
+      commande, ce qui conduit en général à une trajectoire plus douce et
+      plus économe en énergie.
+    """)
+    return
+
+
 if __name__ == "__main__":
     app.run()
