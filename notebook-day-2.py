@@ -1377,11 +1377,6 @@ def _(mo):
     return
 
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> ee5dd11b4945937472fcbd7efb6580e7129c60e3
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
