@@ -1087,57 +1087,87 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ## Analyse des équilibres
+    Nous cherchons les états d’équilibre du système, où :
 
-    Pour trouver les équilibres du système avec des entrées constantes $f$ et $\varphi$, on analyse les équations différentielles en considérant toutes les variables d'état : $(x, \dot{x}, y, \dot{y}, \theta, \dot{\theta})$.
+    $$
+    \dot{x} = \dot{y} = \dot{\theta} = 0, \quad \ddot{x} = \ddot{y} = \ddot{\theta} = 0
+    $$
 
-    Un état d'équilibre correspond à un état où toutes les dérivées sont nulles :
+    D’après les équations fournies, la dynamique du système est :
+    ### Équations du mouvement
 
-    $$\dot{x} = 0, \quad \ddot{x} = 0, \quad \dot{y} = 0, \quad \ddot{y} = 0, \quad \dot{\theta} = 0, \quad \ddot{\theta} = 0$$
+    Le système dynamique du booster est donné par les équations suivantes :
 
-    Équations du mouvement :
+    #### Translation horizontale :
 
-    - $M\ddot{x} = -f \sin(\theta + \varphi)$
-    - $M\ddot{y} = f \cos(\theta + \varphi) - Mg$
-    - $J\ddot{\theta} = -\ell \sin(\varphi) f$
+    $$
+    M \ddot{x} = -f \sin(\theta + \phi)
+    $$
 
-    ---
+    #### Translation verticale :
 
-    Étape 1 — Équation de rotation :
+    $$
+    M \ddot{y} = f \cos(\theta + \phi) - Mg
+    $$
 
-    $$J\ddot{\theta} = -\ell \sin(\varphi) f = 0 \implies \sin(\varphi) = 0 \implies \varphi = 0$$
+    #### Rotation  :
 
-    Car $|\varphi| < \frac{\pi}{2}$ et $f > 0$, la seule solution valide est $\varphi = 0$.
+    $$
+    J \ddot{\theta} = -\ell f \sin(\phi)
+    $$
 
-    Étape 2 — Équation verticale :
 
-    $$M\ddot{y} = f\cos(\theta) - Mg = 0 \implies f\cos(\theta) = Mg$$
 
-    Car $|\theta| < \frac{\pi}{2}$ et $f > 0$, la seule solution est $\theta = 0$ et $f = Mg$.
+    ### Conditions à l'équilibre
 
-    Étape 3 — Équation horizontale :
+    #### 1. Équilibre horizontal
 
-    $$M\ddot{x} = -f\sin(\theta) = 0 \implies \theta = 0 $$
+    $$
+    \ddot{x} = 0 \Rightarrow \sin(\theta + \phi) = 0 \Rightarrow \theta + \phi = k\pi
+    $$
 
-    Cohérent avec l'étape 2.
+    Avec les contraintes \( |\theta| < \frac{\pi}{2} \) et \( |\phi| < \frac{\pi}{2} \), la seule solution acceptable est :
 
-    Étape 4 — Conditions sur les vitesses et positions :
+    $$
+    \boxed{\theta + \phi = 0}
+    \quad \Rightarrow \boxed{\phi = -\theta}
+    $$
 
-    Les conditions $\dot{x} = 0$, $\dot{y} = 0$, $\dot{\theta} = 0$ doivent être satisfaites. Mais les équations du mouvement ne contraignent pas les positions $x$ et $y$ : n'importe quelle valeur de $x_e$ et $y_e$ est compatible avec l'équilibre.
 
-    ---
+    #### 2. Équilibre vertical
 
-    Conclusion :
+    $$
+    \ddot{y} = 0 \Rightarrow f \cos(\theta + \phi) = Mg
+    $$
 
-    Les entrées à l'équilibre sont uniques :
+    En remplaçant \( \theta + \phi = 0 \) :
 
-    $$\varphi = 0, \quad \theta = 0, \quad f = Mg$$
+    $$
+    \cos(0) = 1 \Rightarrow \boxed{f = Mg}
+    $$
 
-    Mais l'état d'équilibre n'est pas unique — il forme une famille continue paramétrée par $(x_e, y_e)$ :
 
-    $$\boxed{(x_e,\ 0,\ y_e,\ 0,\ 0,\ 0) \qquad \forall\, x_e \in \mathbb{R},\ y_e \in \mathbb{R}}$$
 
-    Il existe donc une infinité d'états d'équilibre, pour toutes les positions $(x, y)$ où le booster est parfaitement vertical ($\theta = 0$), immobile ($\dot{x} = \dot{y} = \dot{\theta} = 0$), et où la poussée compense exactement la gravité ($f = Mg$, $\varphi = 0$).
+    #### 3. Équilibre de rotation
+
+    $$
+    \ddot{\theta} = 0 \Rightarrow \sin(\phi) = 0 \Rightarrow \boxed{\phi = 0}
+    \quad \Rightarrow \boxed{\theta = 0}
+    $$
+
+
+
+
+
+    Le système possède un équilibre unique (sous les hypothèses \( f > 0 \), \( |\theta| < \frac{\pi}{2} \), \( |\phi| < \frac{\pi}{2} \)) :
+
+    $$
+    \boxed{
+    \theta = 0, \quad \phi = 0, \quad f = Mg
+    }
+    $$
+
+    Dans cet état, le booster est parfaitement vertical et la poussée est verticale vers le haut et elle compense la gravité.
     """)
     return
 
@@ -1222,7 +1252,7 @@ def _(mo):
     \ddot{\Delta y} = \frac{\Delta f}{M}
     $$
     $$
-    \ddot{\Delta \theta} = -\frac{3g}{\ell} \Delta \varphi
+    \ddot{\Delta\theta} = -\frac{\ell \cdot Mg}{J}\Delta\varphi
     $$
 
     ### Matrix A
@@ -1252,7 +1282,7 @@ def _(mo):
 
     - **Row 5** — $\dot{\Delta \theta} = \dot{\Delta \theta}$: same as row 1. Coefficient $+1$ on $\dot{\Delta\theta}$ (column 6), zeros elsewhere.
 
-    - **Row 6** — $\ddot{\Delta \theta} = -\frac{3g}{\ell}\Delta\varphi$: this depends **only** on the input $\Delta\varphi$, not on any state. So this row is **all zeros** in $A$.
+    - **Row 6** — $\ddot{\Delta\theta} = -\frac{\ell \cdot Mg}{J}\Delta\varphi$: this depends **only** on the input $\Delta\varphi$, not on any state. So this row is **all zeros** in $A$.
 
     ### Matrix B
 
