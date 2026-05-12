@@ -1738,7 +1738,7 @@ def _(mo):
 
 @app.cell
 def _(A_lat, B_lat, mo, np, plt):
-    def simulate_and_plot(k3, k4, t_end=30.0, label=""):
+    def simulate_and_plot(k3, k4, t_end=20.0, label=""):
         from scipy.integrate import solve_ivp
 
         K  = np.array([0.0, 0.0, k3, k4])
@@ -1915,6 +1915,234 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    On cherche,
+    $$
+    K_{pp} = \begin{bmatrix}
+    k_1 & k_2 & k_3 & k_4
+    \end{bmatrix}
+    $$
+
+    telle que le système en boucle fermée :
+
+    $$
+    \dot{\mathbf{x}} = (A - BK_{pp})\mathbf{x}
+    $$
+
+    ait des valeurs propres (pôles) placées à des positions désirées dans le plan complexe, reflétant nos objectifs de performance.
+
+
+
+    Nous voulons un amortissement modéré et un temps de stabilisation ≤ 20s
+
+
+    $$
+    T_s \approx \frac{4}{|\text{Re}(\lambda)|}
+    $$
+
+
+    $$
+    \frac{4}{|\text{Re}(\lambda)|} \leq 20 \quad \Rightarrow \quad |\text{Re}(\lambda)| \geq 0.2
+    $$
+
+    En fixant $f = Mg$, la dynamique verticale $\ddot{y} = 0$ devient
+    autonome et on peut l'ignorer. Il reste un sous-système à 4 états :
+
+    $$
+    \mathbf{x}_\text{lat} = \begin{bmatrix} \Delta x \\ \Delta\dot{x} \\ \Delta\theta \\ \Delta\dot{\theta} \end{bmatrix},
+    \qquad
+    u = \Delta\phi,
+    \qquad
+    \dot{\mathbf{x}}_\text{lat} = A_\text{lat}\,\mathbf{x}_\text{lat} + B_\text{lat}\,u
+    $$
+
+    où, d'après la linéarisation (avec $\ell = 2$, $M = g = 1$, $J = M\ell^2/12 = 1/3$) :
+
+    $$
+    A_\text{lat} =
+    \begin{bmatrix} 0 & 1 & 0 & 0 \\ 0 & 0 & -g & 0 \\ 0 & 0 & 0 & 1 \\ 0 & 0 & 0 & 0 \end{bmatrix},
+    \qquad
+    B_\text{lat} =
+    \begin{bmatrix} 0 \\ -g \\ 0 \\ -\dfrac{Mg(\ell/2)}{J} \end{bmatrix}
+    =
+    \begin{bmatrix} 0 \\ -1 \\ 0 \\ -3 \end{bmatrix}
+    $$
+
+    - **$A_\text{lat}$** décrit l'évolution libre : $\dot{x} = v_x$ et $\dot{\theta} = \omega$
+     .
+    - **$B_\text{lat}$** montre comment $\Delta\phi$ agit : il crée une accélération $-g\Delta\phi$
+      sur $\ddot{x}$ et une accélération angulaire
+      $-3\Delta\phi$ sur $\ddot{\theta}$ (via le couple $f \cdot (\ell/2)\sin\phi \approx Mg\cdot(\ell/2)\cdot\phi$).
+
+    La loi de retour d'état $\Delta\phi = -K_{pp}\,\mathbf{x}_\text{lat}$ place les valeurs propres de
+    $A_\text{lat} - B_\text{lat} K_{pp}$ aux pôles désirés $\{\lambda_i\}$.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Balayage de configurations de pôles
+
+    On paramètre les 4 pôles par un seul scalaire $\sigma > 0$ :
+
+    $$
+    \lambda = \{-\sigma,\ -1.2\sigma,\ -1.8\sigma \pm 0.9\sigma\,j\}
+    $$
+
+      La fréquence naturelle est $\omega_n = \sigma\sqrt{1.8^2+0.9^2} \approx 2\sigma$, ce qui
+      reste cohérent avec la règle $T_s \approx 4/\sigma$.
+
+    On fait varier $\sigma$ de $0.2$ à $2.0$ (20 valeurs), on simule chaque cas et on retient
+    le **meilleur** : le plus rapide à converger tout en respectant $|\theta|,|\phi| < \pi/2$.
+    """)
+    return
+
+
+@app.cell
+def _(A_lat, B_lat, np, plt, scipy):
+    from matplotlib.lines import Line2D as _Line2D
+
+    _T = 25.0
+    _n = 600
+    _t_sweep = np.linspace(0, _T, _n)
+    _state_0 = [0.0, 0.0, np.pi / 4, 0.0]
+    _sigmas = np.linspace(0.2, 2.0, 20)
+
+    def _run(sigma):
+        poles = [-sigma, -1.2 * sigma,
+                 -1.8 * sigma + 0.9j * sigma,
+                 -1.8 * sigma - 0.9j * sigma]
+        K = scipy.signal.place_poles(A_lat, B_lat, poles).gain_matrix.squeeze()
+        A_cl = A_lat - B_lat @ K.reshape(1, -1)
+
+        def _f(_, s):
+            return (A_cl @ np.array(s)).tolist()
+
+        r = scipy.integrate.solve_ivp(_f, [0, _T], _state_0, t_eval=_t_sweep)
+        theta = r.y[2]
+        phi = -(K @ r.y)
+        max_theta = np.max(np.abs(np.degrees(theta)))
+        max_phi = np.max(np.abs(np.degrees(phi)))
+        exceeded = np.where(np.abs(theta) > np.deg2rad(2.0))[0]
+        settle_t = _t_sweep[exceeded[-1]] if len(exceeded) else 0.0
+        valid = (max_theta < 90.0) and (max_phi < 90.0) and (settle_t <= 20.0)
+        return dict(sigma=sigma, K=K, theta=theta, phi=phi,
+                    settle_t=settle_t, max_phi=max_phi, valid=valid)
+
+    _results = []
+    for _s in _sigmas:
+        try:
+            _results.append(_run(_s))
+        except Exception:
+            pass
+
+    _valid = [r for r in _results if r["valid"]]
+    _best = min(_valid, key=lambda r: r["settle_t"]) if _valid else \
+            min(_results, key=lambda r: r["settle_t"])
+
+    K_pp = _best["K"]
+    print(f"σ optimal = {_best['sigma']:.3f}")
+    print(f"K_pp      = {np.round(K_pp, 4)}")
+    print(f"Pôles BF  = {np.round(np.linalg.eigvals(A_lat - B_lat @ K_pp.reshape(1,-1)), 3)}")
+    print(f"Temps de convergence ≈ {_best['settle_t']:.2f} s  |  max|φ| = {_best['max_phi']:.1f}°")
+
+    fig_sweep, (ax_th, ax_ph) = plt.subplots(2, 1, sharex=True, figsize=(11, 6))
+
+    for _r in _results:
+        _c = "tab:green" if _r["valid"] else "tab:red"
+        _a = 0.25
+        if _r is _best:
+            _c, _a = "black", 1.0
+        ax_th.plot(_t_sweep, np.degrees(_r["theta"]), color=_c, alpha=_a,
+                   lw=2.5 if _r is _best else 0.9)
+        ax_ph.plot(_t_sweep, np.degrees(_r["phi"]), color=_c, alpha=_a,
+                   lw=2.5 if _r is _best else 0.9)
+
+    for ax in (ax_th, ax_ph):
+        ax.axhline(90,  color="r", ls=":", lw=1.2, label=r"$\pm\pi/2$ limite")
+        ax.axhline(-90, color="r", ls=":", lw=1.2)
+        ax.axvline(20,  color="grey", ls="--", lw=1, label="$t=20$ s")
+        ax.grid(True)
+
+    ax_th.set_ylabel("$\\theta$ (°)")
+    ax_ph.set_ylabel("$\\phi$ (°)")
+    ax_ph.set_xlabel("Temps $t$ (s)")
+
+    _leg = [_Line2D([0],[0], color="tab:green", alpha=0.6, label="Valide ($|\\theta|,|\\phi|<90°$, $T_s\\leq20$s)"),
+            _Line2D([0],[0], color="tab:red",   alpha=0.6, label="Invalide (contrainte violée)"),
+            _Line2D([0],[0], color="black", lw=2.5,
+                    label=f"Meilleur ($\\sigma={_best['sigma']:.2f}$, $T_s={_best['settle_t']:.1f}$s)")]
+    ax_th.legend(handles=_leg, loc="upper right", fontsize=8)
+
+    fig_sweep.suptitle("Balayage de pôles : $\\sigma$ de 0.15 à 2.0 — recherche du meilleur $K_{pp}$")
+    plt.tight_layout()
+    fig_sweep
+    return (K_pp,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Simulation détaillée du meilleur $K_{pp}$
+
+    On reporte maintenant les trois grandeurs d'intérêt ($x$, $\theta$, $\phi$) pour le $K_{pp}$ retenu,
+    et on affiche les valeurs propres de la boucle fermée.
+    """)
+    return
+
+
+@app.cell
+def _(A_lat, B_lat, K_pp, np, plt, scipy):
+    def sim_pp():
+        t_span = [0.0, 20.0]
+        t_eval_pp = np.linspace(*t_span, 500)
+        state_0 = [0.0, 0.0, np.pi / 4, 0.0]
+
+        A_cl_pp = A_lat - B_lat @ K_pp.reshape(1, -1)
+        eigs = np.linalg.eigvals(A_cl_pp)
+        print("Valeurs propres boucle fermée:", np.round(eigs, 4))
+
+        def f_pp(_, s):
+            return (A_cl_pp @ np.array(s)).tolist()
+
+        r = scipy.integrate.solve_ivp(f_pp, t_span, state_0,
+                                      t_eval=t_eval_pp, dense_output=True)
+        sol_t = r.sol(t_eval_pp)
+        phi_t = -(K_pp @ sol_t)
+
+        fig, axes = plt.subplots(3, 1, sharex=True, figsize=(10, 7))
+        axes[0].plot(t_eval_pp, sol_t[0], label=r"$\Delta x(t)$")
+        axes[0].set_ylabel("$x$ (m)")
+        axes[0].grid(True)
+        axes[0].legend()
+
+        axes[1].plot(t_eval_pp, np.degrees(sol_t[2]), label=r"$\Delta\theta(t)$", color="tab:orange")
+        axes[1].axhline(90,  color="r", ls="--", lw=0.9, label=r"$\pm\pi/2$")
+        axes[1].axhline(-90, color="r", ls="--", lw=0.9)
+        axes[1].set_ylabel("$\\theta$ (°)")
+        axes[1].grid(True)
+        axes[1].legend()
+
+        axes[2].plot(t_eval_pp, np.degrees(phi_t), label=r"$\Delta\phi(t)$", color="tab:green")
+        axes[2].axhline(90,  color="r", ls="--", lw=0.9, label=r"$\pm\pi/2$")
+        axes[2].axhline(-90, color="r", ls="--", lw=0.9)
+        axes[2].set_xlabel("Temps $t$ (s)")
+        axes[2].set_ylabel("$\\phi$ (°)")
+        axes[2].grid(True)
+        axes[2].legend()
+
+        plt.suptitle(f"Meilleur $K_{{pp}}$ — placement de pôles (modèle linéarisé)")
+        plt.tight_layout()
+        return fig
+
+    sim_pp()
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## 🧩 Controller Tuned with Optimal Control
 
     Using optimal control, find a gain matrix $K_{oc}$ that satisfies the same set of requirements that the one defined using pole placement.
@@ -1927,9 +2155,168 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    On veut minimiser la fonction coût quadratique :
+
+    $$
+    J = \int_0^\infty \left( \mathbf{x}^\top Q \mathbf{x} + u^\top R u \right) dt
+    $$
+
+    Sous les contraintes :
+
+    $$
+    \dot{\mathbf{x}} = A \mathbf{x} + B u, \quad u = -K_{oc} \mathbf{x}
+    $$
+
+    On attribue une pénalité plus élevée à la déviation angulaire et à la vitesse angulaire, et une pondération plus faible à la position du chariot.
+
+    On commence avec :
+
+    $$
+    Q = \text{diag}(q_1, q_2, q_3, q_4), \quad R = r
+    $$
+
+    Choisissons :
+
+    * $q_1 = 10$ : pénaliser l’écart de position,
+    * $q_2 = 1$ : poids modéré sur la vitesse,
+    * $q_3 = 100$ : forte pénalisation de l’écart angulaire,
+    * $q_4 = 10$ : pénaliser la vitesse angulaire,
+    * $R = 1$ : poids standard sur la commande.
+
+    $$
+    Q = \begin{bmatrix}
+    10 & 0 & 0 & 0 \\
+    0 & 1 & 0 & 0 \\
+    0 & 0 & 100 & 0 \\
+    0 & 0 & 0 & 10
+    \end{bmatrix}, \quad
+    R = [1]
+    $$
+
+
+
+    On utilise l’algorithme LQR  :
+
+    $$
+    K_{oc} = R^{-1} B^\top P
+    $$
+
+    Avec $P$ solution de l’équation de Riccati algébrique continue (CARE) :
+
+    $$
+    A^\top P + P A - P B R^{-1} B^\top P + Q = 0
+    $$
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Calcul du gain $K_{oc}$ par LQR
+
+    On résout l’équation de Riccati algébrique continue (CARE) :
+
+    $$A_\text{lat}^\top P + P A_\text{lat} - P B_\text{lat} R^{-1} B_\text{lat}^\top P + Q = 0$$
+
+    puis $K_{oc} = R^{-1} B_\text{lat}^\top P$.
+
+    On choisit $Q$ pour pénaliser surtout $\theta$ et $\dot{\theta}$ (stabilité angulaire prioritaire),
+    et $x$ modérément (convergence en position). $R$ contrôle l’effort de commande.
+    """)
+    return
+
+
+@app.cell
+def _(A_lat, B_lat, np, scipy):
+    _Q = np.diag([1.0, 0.0, 20.0, 2.0])
+    _R = np.array([[1.0]])
+
+    _P = scipy.linalg.solve_continuous_are(A_lat, B_lat, _Q, _R)
+    K_oc = (np.linalg.inv(_R) @ B_lat.T @ _P).squeeze()
+    print("K_oc =", K_oc)
+    print("Valeurs propres boucle fermée (oc):",
+          np.round(np.linalg.eigvals(A_lat - B_lat @ K_oc.reshape(1, -1)), 4))
+    return (K_oc,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Simulation en boucle fermée :commande optimale
+
+    On intègre le modèle linéarisé avec la loi LQR $\Delta\phi = -K_{oc}\,\mathbf{x}$
+    et on vérifie les mêmes critères que pour le placement de pôles.
+    """)
+    return
+
+
+@app.cell
+def _(A_lat, B_lat, K_oc, np, plt, scipy):
+    def sim_oc():
+        t_span = [0.0, 20.0]
+        t_eval_oc = np.linspace(*t_span, 500)
+        state_0 = [0.0, 0.0, np.pi / 4, 0.0]
+
+        A_cl_oc = A_lat - B_lat @ K_oc.reshape(1, -1)
+
+        def f_oc(_, s):
+            return (A_cl_oc @ np.array(s)).tolist()
+
+        r = scipy.integrate.solve_ivp(f_oc, t_span, state_0, t_eval=t_eval_oc, dense_output=True)
+        sol_t = r.sol(t_eval_oc)
+        phi_t = -(K_oc @ sol_t)
+
+        fig, axes = plt.subplots(3, 1, sharex=True, figsize=(10, 7))
+        axes[0].plot(t_eval_oc, sol_t[0], label=r"$\Delta x(t)$")
+        axes[0].set_ylabel("$x$ (m)")
+        axes[0].grid(True)
+        axes[0].legend()
+
+        axes[1].plot(t_eval_oc, np.degrees(sol_t[2]), label=r"$\Delta\theta(t)$")
+        axes[1].axhline(90, color="r", ls="--", label=r"$\pm\pi/2$")
+        axes[1].axhline(-90, color="r", ls="--")
+        axes[1].set_ylabel("$\\theta$ (°)")
+        axes[1].grid(True)
+        axes[1].legend()
+
+        axes[2].plot(t_eval_oc, np.degrees(phi_t), label=r"$\Delta\phi(t)$")
+        axes[2].axhline(90, color="r", ls="--", label=r"$\pm\pi/2$")
+        axes[2].axhline(-90, color="r", ls="--")
+        axes[2].set_xlabel("Temps $t$ (s)")
+        axes[2].set_ylabel("$\\phi$ (°)")
+        axes[2].grid(True)
+        axes[2].legend()
+
+        plt.suptitle("Commande optimale LQR — boucle fermée (modèle linéarisé)")
+        plt.tight_layout()
+        return fig
+
+    sim_oc()
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## 🧩 Validation
 
     Test the two control strategies (pole placement and optimal control) on the "true" (nonlinear) model with an animation. Check that both controllers achieve their goal; otherwise, go back to the drawing board and tweak the design parameters until they do!
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Validation sur le modèle non linéaire complet
+
+    On utilise `redstart_solve` avec le modèle exact 6D.
+    La loi de contrôle fixe $f = Mg$  et calcule $\phi$
+    à partir de l'état latéral $(x, \dot x, \theta, \dot\theta)$ extrait du vecteur d'état complet.
+
+    On compare les deux stratégies sur la même condition initiale :
+    $x(0)=0$, $\dot x(0)=0$, $y(0)=10$, $\dot y(0)=0$, $\theta(0)=45°$, $\dot\theta(0)=0$.
     """)
     return
 
