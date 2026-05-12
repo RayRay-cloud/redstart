@@ -1504,7 +1504,7 @@ def _(g, l, np):
     C_lat = np.hstack([np.linalg.matrix_power(A_lat, k) @ B_lat for k in range(4)])
     print("Controllability matrix:\n", C_lat)
     print("\nRank:", np.linalg.matrix_rank(C_lat))
-    return
+    return (A_lat,)
 
 
 @app.cell(hide_code=True)
@@ -1541,6 +1541,38 @@ def _(mo):
 
     What do you see? How do you explain it?
     """)
+    return
+
+
+@app.cell
+def _(A_lat, np, plt):
+    from scipy.linalg import expm
+
+
+    # Condition initiale : x(0)=0, dx(0)=0, theta(0)=pi/4, dtheta(0)=0
+    z0 = np.array([0, 0, np.pi/4, 0])
+
+    t = np.linspace(0, 20, 1000)
+
+    # Solution via exponentielle de matrice
+    Z = np.array([expm(A_lat * ti) @ z0 for ti in t])
+
+    fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+
+    axes[0].plot(t, Z[:, 0], label=r"$x(t)$")
+    axes[0].set_title("Position latérale $x(t)$")
+    axes[0].set_xlabel("temps $t$")
+    axes[0].grid(True)
+    axes[0].legend()
+
+    axes[1].plot(t, Z[:, 2], label=r"$\theta(t)$", color="orange")
+    axes[1].set_title("Angle d'inclinaison $\\theta(t)$")
+    axes[1].set_xlabel("temps $t$")
+    axes[1].grid(True)
+    axes[1].legend()
+
+    plt.tight_layout()
+    plt.gcf()
     return
 
 
