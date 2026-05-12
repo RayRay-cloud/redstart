@@ -1167,11 +1167,7 @@ def _(mo):
     }
     $$
 
-    Dans cet état :
-    - Le booster est parfaitement vertical.
-    - La poussée est verticale vers le haut.
-    - Elle compense exactement la gravité.
-    - Il n’y a ni mouvement ni rotation.
+    Dans cet état, le booster est parfaitement vertical et la poussée est verticale vers le haut et elle compense la gravité.
     """)
     return
 
