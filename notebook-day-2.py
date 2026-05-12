@@ -1317,6 +1317,7 @@ def _(mo):
     """)
     return
 
+
 @app.cell
 def _(np):
     A = np.array([
@@ -1337,30 +1338,6 @@ def _(np):
         [0,   -1.5]
     ], dtype=float)
     return A, B
-
-
-@app.cell
-def _(np):
-
-    A = np.array([
-        [0, 1, 0, 0,  0,   0],
-        [0, 0, 0, 0, -1,   0],
-        [0, 0, 0, 1,  0,   0],
-        [0, 0, 0, 0,  0,   0],
-        [0, 0, 0, 0,  0,   1],
-        [0, 0, 0, 0,  0,   0]
-    ], dtype=float)
-
-    B = np.array([
-        [0,    0  ],
-        [0,   -1  ],
-        [0,    0  ],
-        [1,    0  ],
-        [0,    0  ],
-        [0,   -1.5]
-    ], dtype=float)
-
-    return (A,)
 
 
 @app.cell(hide_code=True)
