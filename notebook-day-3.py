@@ -2590,6 +2590,34 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    On implémente directement les formules exprimées sur les questions précedentes.
+    """)
+    return
+
+
+@app.cell
+def _(np):
+    def T(x, dx, y, dy, theta, dtheta, z, dz, ell, M, g):
+   
+        h_x = x - (ell/3) * np.sin(theta)
+        h_y = y + (ell/3) * np.cos(theta)
+        dh_x = dx - (ell/3) * np.cos(theta) * dtheta
+        dh_y = dy - (ell/3) * np.sin(theta) * dtheta
+        d2h_x = (1/M) * z*np.sin(theta) 
+        d2h_y = (1/M) *z* (-np.cos(theta))  - g
+        d3h_x = (1/M) * (np.cos(theta) *z* dtheta + np.sin(theta) * dz)
+        d3h_y = (1/M) * (np.sin(theta) *z* dtheta  - np.cos(theta) * dz)
+
+
+    
+        return h_x, h_y, dh_x, dh_y, d2h_x, d2h_y, d3h_x, d3h_y
+
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## 🧩 Inversion
 
 
