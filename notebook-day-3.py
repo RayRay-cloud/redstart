@@ -2251,6 +2251,52 @@ def _(mo):
     return
 
 
+@app.cell
+def _(np, plt):
+    ell   = 2.0
+    theta = np.pi / 6      # 30° tilt
+    x, y  = 0.0, 0.0      # CoM at origin for clarity
+
+    # Key points
+    hx = x - (ell / 6) * np.sin(theta)
+    hy = y + (ell / 6) * np.cos(theta)
+
+    top  = np.array([x - (ell/2)*np.sin(theta),  y + (ell/2)*np.cos(theta)])
+    base = np.array([x + (ell/2)*np.sin(theta),  y - (ell/2)*np.cos(theta)])
+
+    fig, ax = plt.subplots(figsize=(5, 7))
+    ax.set_aspect('equal')
+    ax.axis('off')
+
+    # Booster rod
+    ax.plot([base[0], top[0]], [base[1], top[1]],
+            color='steelblue', lw=6, solid_capstyle='round', zorder=2)
+
+    # ell/6 segment: CoM → h
+    ax.annotate('', xy=(hx, hy), xytext=(x, y),
+                arrowprops=dict(arrowstyle='->', color='green', lw=2))
+    mid = np.array([(x+hx)/2, (y+hy)/2])
+    ax.text(mid[0] - 0.12, mid[1], r'$\ell/6$', color='green',
+            fontsize=13, ha='right', va='center')
+
+    # Points
+    ax.plot(*base, 'ks', ms=9, zorder=4)
+    ax.plot(x, y,  'ko', ms=9, zorder=4)
+    ax.plot(hx, hy,'ro', ms=11, zorder=5)
+    ax.plot(*top,  'k^', ms=9, zorder=4)
+
+    # Labels
+    ax.text(base[0]+0.08, base[1]-0.10, 'base (reactor)', fontsize=11)
+    ax.text(x+0.08,       y-0.12,       r'$(x,\,y)$ — CoM', fontsize=11)
+    ax.text(hx+0.08,      hy+0.06,      r'$h$', fontsize=15, color='red', fontweight='bold')
+    ax.text(top[0]+0.08,  top[1]+0.04,  'top', fontsize=11)
+
+    ax.set_title('Geometrical interpretation of $h$', fontsize=13, pad=10)
+    plt.tight_layout()
+    plt.show()
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
