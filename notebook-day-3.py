@@ -2598,7 +2598,7 @@ def _(mo):
 @app.cell
 def _(np):
     def T(x, dx, y, dy, theta, dtheta, z, dz, ell, M, g):
-   
+
         h_x = x - (ell/3) * np.sin(theta)
         h_y = y + (ell/3) * np.cos(theta)
         dh_x = dx - (ell/3) * np.cos(theta) * dtheta
@@ -2609,7 +2609,7 @@ def _(np):
         d3h_y = (1/M) * (np.sin(theta) *z* dtheta  - np.cos(theta) * dz)
 
 
-    
+
         return h_x, h_y, dh_x, dh_y, d2h_x, d2h_y, d3h_x, d3h_y
 
     return
@@ -2625,6 +2625,63 @@ def _(mo):
 
     Implement the corresponding function `T_inv`.
     """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    The second output derivative satisfies
+    $$\ddot h = \frac{z}{M}\begin{bmatrix}\sin\theta\\-\cos\theta\end{bmatrix}-\begin{bmatrix}0\\g\end{bmatrix}$$
+    Define $a:=\ddot h_x$ and $b:=\ddot h_y+g$. Then $a/(-b)=\tan\theta$, so:
+    $$\theta = \mathrm{atan2}(-a,\,b)$$
+
+
+
+
+    From $Ma=z\sin\theta$ and $Mb=-z\cos\theta$, squaring and adding both equations:
+    $$M^2 a^2 + M^2 b^2 = z^2{(\sin^2\theta+\cos^2\theta)} = z^2$$
+    Since $z<0$ by assumption:
+    $$\boxed{z = -M\sqrt{a^2+b^2}}$$
+    This formula is always valid because it works  even when cos or sin is near zero, that's why we didn't use a simple division.
+
+
+
+    Differentiating $\ddot h$ gives a $2\times 2$ linear system, so we can just calculate the déterminant:
+    $$\underbrace{\begin{bmatrix}z\cos\theta&\sin\theta\\z\sin\theta&-\cos\theta\end{bmatrix}}_{A}\begin{bmatrix}\dot\theta\\\dot z\end{bmatrix}=M\,h^{(3)}, \qquad \det A = -z\ne 0$$
+    z is always strictly negative in our hypothesis, so A is always inversible.
+
+
+
+    $$x = h_x + \frac{\ell}{6}\sin\theta, \qquad y = h_y - \frac{\ell}{6}\cos\theta$$
+    $$\dot x = \dot h_x + \frac{\ell}{6}\cos\theta\,\dot\theta, \qquad \dot y = \dot h_y + \frac{\ell}{6}\sin\theta\,\dot\theta$$
+    """)
+    return
+
+
+@app.cell
+def _(M, g, l, np):
+    def T_inv(hx, hy, dhx, dhy, d2hx, d2hy, d3hx, d3hy):
+
+        a, b = d2hx, d2hy + g
+        theta = np.arctan2(-a, b)
+        sin_t, cos_t = np.sin(theta), np.cos(theta)
+
+ 
+        z = -M * np.sqrt(a**2 + b**2)  
+  
+        A = np.array([[cos_t * z,  sin_t],
+                      [sin_t * z, -cos_t]])
+        dtheta, dz = np.linalg.solve(A, M * np.array([d3hx, d3hy]))
+
+    
+        x  = hx + (l/6) * sin_t
+        y  = hy - (l/6) * cos_t
+        dx = dhx + (l/6) * cos_t * dtheta
+        dy = dhy + (l/6) * sin_t * dtheta
+
+        return x, dx, y, dy, theta, dtheta, z, dz
+
     return
 
 
