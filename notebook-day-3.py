@@ -2987,15 +2987,13 @@ def _(M, booster_anim, compute, g, l, mo, np, world):
 def _(mo):
     mo.md(r"""
     ## Conclusion
-    ---
 
-    ### What was done in the previous sections
+    ###  previous sections
 
     Three controllers were built using the **linearized model** around the hovering equilibrium $(f = Mg,\ \phi = 0)$: a manually tuned one, a pole placement controller $K_{pp}$, and an LQR controller $K_{oc}$. All three gave satisfying results in simulation, but they all depend on the booster staying close to vertical. As soon as the tilt becomes large, the linearization is no longer valid and the controllers may fail.
 
-    ---
 
-    ### A different approach: flatness
+    ### Today's approach: flatness
 
     Rather than linearizing the system, we identified a special output:
 
@@ -3009,7 +3007,6 @@ def _(mo):
 
     This means that choosing a smooth trajectory for $h$ is enough to fully determine a physically valid motion for the booster.
 
-    ---
 
     ### Trajectory planning
 
@@ -3021,21 +3018,18 @@ def _(mo):
 
     The 10-second scenario confirms that the method works: starting from $(x, y) = (5, 20)$ with a tilt of $-\pi/8$, the booster reaches the target state exactly at $t = t_f$.
 
-    ---
 
     ### Limitations
 
     Two points deserve attention for future work.
 
-    The inversion $T^{-1}$ requires $z < 0$ at all times. When $z = 0$, the map becomes singular and the tilt can no longer be controlled. The polynomial planner does not enforce this condition automatically, so it should be checked explicitly for any given set of boundary conditions.
+    The inversion $T^{-1}$ requires $z < 0$ at all times. When $z = 0$, the map becomes singular and the tilt can no longer be controlled. The polynomial planner does not enforce this condition, so it should be checked explicitly for any given set of boundary conditions.
 
-    The planner also has no notion of the physical environment. It only enforces the start and end states, so nothing prevents the planned trajectory from violating other spatial constraints. Obstacle avoidance would need to be added separately.
-
-    ---
+    The polynomial method also gives a unique trajectory solution so obstacle avoidance would be tricky to implement if the trajectory found is not feasible physically.
 
     ### Perspective
 
-    The result obtained here is a reference trajectory. A complete system would combine this open-loop plan with a feedback controller — such as $K_{pp}$ or $K_{oc}$ — to handle disturbances and remain robust in practice.
+    The result obtained here is a reference trajectory. A complete system would combine this open-loop plan with a feedback controller  such as $K_{pp}$ or $K_{oc}$  to handle disturbances and remain robust in practice.
     """)
     return
 
