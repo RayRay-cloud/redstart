@@ -2415,35 +2415,52 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ## Third and Fourth Derivatives of $h$
+    ## $h^{(3)}$ — Third Derivative
+
+    Starting from:
+
+    $$\ddot{h} = \begin{bmatrix} \dfrac{z\sin\theta}{M} \\ -\dfrac{z\cos\theta}{M} - g \end{bmatrix}$$
+
+    Differentiating with respect to time using the **product rule** ($g$ is constant so it vanishes):
+
+    $$\frac{d}{dt}(z\sin\theta) = \dot{z}\sin\theta + z\cos\theta\,\dot\theta \qquad \frac{d}{dt}(z\cos\theta) = \dot{z}\cos\theta - z\sin\theta\,\dot\theta$$
+
+    $$\boxed{h^{(3)} = \frac{1}{M}\begin{bmatrix} \dot{z}\sin\theta + z\cos\theta\,\dot\theta \\ -\dot{z}\cos\theta + z\sin\theta\,\dot\theta \end{bmatrix}}$$
 
     ---
+    ## $h^{(4)}$ — Fourth Derivative
 
-    ### Third derivative $h^{(3)}$
+    We differentiate $h^{(3)}$ component by component.
 
-    Differentiating $\ddot{h}$ with respect to time:
+    **Component 1:** $\dfrac{d}{dt}\!\left(\dot{z}\sin\theta + z\cos\theta\,\dot\theta\right)$
 
-    $$\boxed{h^{(3)} = \frac{1}{M}\begin{pmatrix}\cos\theta \\ \sin\theta\end{pmatrix}\dot{\theta}z + \frac{1}{M}\begin{pmatrix}\sin\theta \\ -\cos\theta\end{pmatrix}\dot{z}}$$
+    $$\frac{d}{dt}(\dot{z}\sin\theta) = \ddot{z}\sin\theta + \dot{z}\cos\theta\,\dot\theta$$
 
-    ---
+    $$\frac{d}{dt}(z\cos\theta\,\dot\theta) = \dot{z}\cos\theta\,\dot\theta - z\sin\theta\,\dot\theta^2 + z\cos\theta\,\ddot\theta$$
 
-    ### Fourth derivative $h^{(4)}$
+    Summing:
 
-    Differentiating $h^{(3)}$ once more and collecting terms:
+    $$\ddot{z}\sin\theta + 2\dot{z}\cos\theta\,\dot\theta - z\sin\theta\,\dot\theta^2 + z\cos\theta\,\ddot\theta$$
 
-    $$h^{(4)} = \frac{1}{M}\begin{pmatrix}-\sin\theta\\\cos\theta\end{pmatrix}\dot{\theta}^2 z + \frac{1}{M}\begin{pmatrix}\cos\theta\\\sin\theta\end{pmatrix}\frac{6}{M\ell}(\cos\theta f_x + \sin\theta f_y)z + \frac{2}{M}\begin{pmatrix}\cos\theta\\\sin\theta\end{pmatrix}\dot{\theta}\dot{z} + \frac{1}{M}\begin{pmatrix}\sin\theta\\-\cos\theta\end{pmatrix}v_1$$
+    **Component 2:** $\dfrac{d}{dt}\!\left(-\dot{z}\cos\theta + z\sin\theta\,\dot\theta\right)$
 
-    **Plugging in the auxiliary system.** From the second row of the inverted rotation:
+    $$\frac{d}{dt}(-\dot{z}\cos\theta) = -\ddot{z}\cos\theta + \dot{z}\sin\theta\,\dot\theta$$
 
-    $$\begin{pmatrix}\sin\theta & -\cos\theta \\ \cos\theta & \sin\theta\end{pmatrix}\begin{pmatrix}f_x\\f_y\end{pmatrix} = \begin{pmatrix}z - M\dfrac{\ell}{6}\dot{\theta}^2 \\[8pt] \dfrac{M\ell\, v_2}{6}\end{pmatrix}$$
+    $$\frac{d}{dt}(z\sin\theta\,\dot\theta) = \dot{z}\sin\theta\,\dot\theta + z\cos\theta\,\dot\theta^2 + z\sin\theta\,\ddot\theta$$
 
-    we have $\cos\theta f_x + \sin\theta f_y = \dfrac{M\ell\, v_2}{6}$, and therefore $\ddot{\theta} = -v_2$.
+    Summing:
 
-    Regrouping the $v_1$, $v_2$ terms using $R\!\left(\theta - \dfrac{\pi}{2}\right) = \begin{pmatrix}\sin\theta & \cos\theta \\ -\cos\theta & \sin\theta\end{pmatrix}$:
+    $$-\ddot{z}\cos\theta + 2\dot{z}\sin\theta\,\dot\theta + z\cos\theta\,\dot\theta^2 + z\sin\theta\,\ddot\theta$$
 
-    $$\boxed{h^{(4)} = \frac{1}{M}R\!\left(\theta - \frac{\pi}{2}\right)\left(v + \begin{pmatrix}-\dot{\theta}^2 z \\ 2\dot{\theta}\dot{z}\end{pmatrix}\right)}$$
+    **Substituting** $\ddot{z} = v_1$ and $\ddot\theta = v_2/z$ so $z\ddot\theta = v_2$:
 
-    where $v = (v_1, v_2)^T$.
+    $$\boxed{h^{(4)} = \frac{1}{M}\begin{bmatrix} v_1\sin\theta + v_2\cos\theta + 2\dot{z}\cos\theta\,\dot\theta - z\sin\theta\,\dot\theta^2 \\ -v_1\cos\theta + v_2\sin\theta + 2\dot{z}\sin\theta\,\dot\theta + z\cos\theta\,\dot\theta^2 \end{bmatrix}}$$
+
+    Separating input and state terms:
+
+    $$h^{(4)} = \frac{1}{M}\begin{bmatrix} \sin\theta & \cos\theta \\ -\cos\theta & \sin\theta \end{bmatrix}\begin{bmatrix} v_1 \\ v_2 \end{bmatrix} + \frac{1}{M}\begin{bmatrix} 2\dot{z}\cos\theta\,\dot\theta - z\sin\theta\,\dot\theta^2 \\ 2\dot{z}\sin\theta\,\dot\theta + z\cos\theta\,\dot\theta^2 \end{bmatrix}$$
+
+    where $\begin{bmatrix} \sin\theta & \cos\theta \\ -\cos\theta & \sin\theta \end{bmatrix} = R(\theta - \pi/2)$.
     """)
     return
 
