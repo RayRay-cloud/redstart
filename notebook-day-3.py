@@ -2415,6 +2415,59 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    ## $h^{(3)}$ — Third Derivative
+
+    Starting from:
+
+    $$\ddot{h} = \begin{bmatrix} \dfrac{z\sin\theta}{M} \\ -\dfrac{z\cos\theta}{M} - g \end{bmatrix}$$
+
+    Differentiating with respect to time using the **product rule** ($g$ is constant so it vanishes):
+
+    $$\frac{d}{dt}(z\sin\theta) = \dot{z}\sin\theta + z\cos\theta\,\dot\theta \qquad \frac{d}{dt}(z\cos\theta) = \dot{z}\cos\theta - z\sin\theta\,\dot\theta$$
+
+    $$\boxed{h^{(3)} = \frac{1}{M}\begin{bmatrix} \dot{z}\sin\theta + z\cos\theta\,\dot\theta \\ -\dot{z}\cos\theta + z\sin\theta\,\dot\theta \end{bmatrix}}$$
+
+    ---
+    ## $h^{(4)}$ — Fourth Derivative
+
+    We differentiate $h^{(3)}$ component by component.
+
+    **Component 1:** $\dfrac{d}{dt}\!\left(\dot{z}\sin\theta + z\cos\theta\,\dot\theta\right)$
+
+    $$\frac{d}{dt}(\dot{z}\sin\theta) = \ddot{z}\sin\theta + \dot{z}\cos\theta\,\dot\theta$$
+
+    $$\frac{d}{dt}(z\cos\theta\,\dot\theta) = \dot{z}\cos\theta\,\dot\theta - z\sin\theta\,\dot\theta^2 + z\cos\theta\,\ddot\theta$$
+
+    Summing:
+
+    $$\ddot{z}\sin\theta + 2\dot{z}\cos\theta\,\dot\theta - z\sin\theta\,\dot\theta^2 + z\cos\theta\,\ddot\theta$$
+
+    **Component 2:** $\dfrac{d}{dt}\!\left(-\dot{z}\cos\theta + z\sin\theta\,\dot\theta\right)$
+
+    $$\frac{d}{dt}(-\dot{z}\cos\theta) = -\ddot{z}\cos\theta + \dot{z}\sin\theta\,\dot\theta$$
+
+    $$\frac{d}{dt}(z\sin\theta\,\dot\theta) = \dot{z}\sin\theta\,\dot\theta + z\cos\theta\,\dot\theta^2 + z\sin\theta\,\ddot\theta$$
+
+    Summing:
+
+    $$-\ddot{z}\cos\theta + 2\dot{z}\sin\theta\,\dot\theta + z\cos\theta\,\dot\theta^2 + z\sin\theta\,\ddot\theta$$
+
+    **Substituting** $\ddot{z} = v_1$ and $\ddot\theta = v_2/z$ so $z\ddot\theta = v_2$:
+
+    $$\boxed{h^{(4)} = \frac{1}{M}\begin{bmatrix} v_1\sin\theta + v_2\cos\theta + 2\dot{z}\cos\theta\,\dot\theta - z\sin\theta\,\dot\theta^2 \\ -v_1\cos\theta + v_2\sin\theta + 2\dot{z}\sin\theta\,\dot\theta + z\cos\theta\,\dot\theta^2 \end{bmatrix}}$$
+
+    Separating input and state terms:
+
+    $$h^{(4)} = \frac{1}{M}\begin{bmatrix} \sin\theta & \cos\theta \\ -\cos\theta & \sin\theta \end{bmatrix}\begin{bmatrix} v_1 \\ v_2 \end{bmatrix} + \frac{1}{M}\begin{bmatrix} 2\dot{z}\cos\theta\,\dot\theta - z\sin\theta\,\dot\theta^2 \\ 2\dot{z}\sin\theta\,\dot\theta + z\cos\theta\,\dot\theta^2 \end{bmatrix}$$
+
+    where $\begin{bmatrix} \sin\theta & \cos\theta \\ -\cos\theta & \sin\theta \end{bmatrix} = R(\theta - \pi/2)$.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## 🧩 Exact Linearization
 
     Show that with yet another auxiliary system with input $u=(u_1, u_2)$ and output $v$ fed into the previous one, we can achieve the dynamics
