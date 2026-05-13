@@ -2983,5 +2983,62 @@ def _(M, booster_anim, compute, g, l, mo, np, world):
     return
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Conclusion
+    ---
+
+    ### What was done in the previous sections
+
+    Three controllers were built using the **linearized model** around the hovering equilibrium $(f = Mg,\ \phi = 0)$: a manually tuned one, a pole placement controller $K_{pp}$, and an LQR controller $K_{oc}$. All three gave satisfying results in simulation, but they all depend on the booster staying close to vertical. As soon as the tilt becomes large, the linearization is no longer valid and the controllers may fail.
+
+    ---
+
+    ### A different approach: flatness
+
+    Rather than linearizing the system, we identified a special output:
+
+    $$
+    h = \begin{bmatrix} x - \dfrac{\ell}{6}\sin\theta \\[6pt] y + \dfrac{\ell}{6}\cos\theta \end{bmatrix}
+    $$
+
+    This is a point on the booster body located $\ell/6$ above the center of mass. The key property is that the full state and inputs can be recovered from $h$ and its time derivatives alone, without solving any ODE. When the dynamics are expressed in terms of $h$, all nonlinear terms cancel and the system reduces to two independent integrators:
+
+    $$h^{(4)} = u$$
+
+    This means that choosing a smooth trajectory for $h$ is enough to fully determine a physically valid motion for the booster.
+
+    ---
+
+    ### Trajectory planning
+
+    A degree-7 polynomial was used for each component of $h(t)$, with coefficients chosen to match position, velocity, acceleration and jerk at both endpoints. The map $T^{-1}$ then gives back the full state and inputs at any time:
+
+    $$
+    (x,\ \dot{x},\ y,\ \dot{y},\ \theta,\ \dot{\theta},\ z,\ \dot{z},\ f,\ \phi)
+    $$
+
+    The 10-second scenario confirms that the method works: starting from $(x, y) = (5, 20)$ with a tilt of $-\pi/8$, the booster reaches the target state exactly at $t = t_f$.
+
+    ---
+
+    ### Limitations
+
+    Two points deserve attention for future work.
+
+    The inversion $T^{-1}$ requires $z < 0$ at all times. When $z = 0$, the map becomes singular and the tilt can no longer be controlled. The polynomial planner does not enforce this condition automatically, so it should be checked explicitly for any given set of boundary conditions.
+
+    The planner also has no notion of the physical environment. It only enforces the start and end states, so nothing prevents the planned trajectory from violating other spatial constraints. Obstacle avoidance would need to be added separately.
+
+    ---
+
+    ### Perspective
+
+    The result obtained here is a reference trajectory. A complete system would combine this open-loop plan with a feedback controller — such as $K_{pp}$ or $K_{oc}$ — to handle disturbances and remain robust in practice.
+    """)
+    return
+
+
 if __name__ == "__main__":
     app.run()
