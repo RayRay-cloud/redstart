@@ -2300,6 +2300,51 @@ def _(np, plt):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+ 
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Interprétation géométrique du point $h$
+
+    On définit :
+    $$
+    h := \begin{bmatrix}
+    x - \dfrac{\ell}{6} \sin \theta \\[6pt]
+    y + \dfrac{\ell}{6} \cos \theta
+    \end{bmatrix}
+    $$
+
+    où $(x, y)$ est le centre de masse du booster, $\ell$ sa longueur totale, et $\theta$ son angle d'inclinaison par rapport à la verticale.
+
+    Le vecteur allant du centre de masse vers $h$ est :
+    $$
+    \vec{v} = \frac{\ell}{6}\begin{pmatrix} -\sin\theta \\ +\cos\theta \end{pmatrix}
+    $$
+
+    Or, le vecteur unitaire orienté de la base vers le haut du booster est précisément $(-\sin\theta,\, \cos\theta)$.
+    Le point $h$ est donc situé à une distance $\ell/6$ **au-dessus du centre de masse**, le long de l'axe du booster.
+
+    Sa position sur l'axe est la suivante :
+
+    | Point | Distance au centre de masse |
+    |---|---|
+    | Base (réacteur) | $-\ell/2$ |
+    | Centre de masse $(x, y)$ | $0$ |
+    | $h$ | $+\ell/6$ |
+    | Extrémité supérieure | $+\ell/2$ |
+
+    $h$ est un point matériel du booster qui se déplace et tourne avec lui.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## 🧩 First and Second-Order Derivatives
 
     Compute $\dot{h}$ as a function of $\dot{x}$, $\dot{y}$, $\theta$ and $\dot{\theta}$ (and constants) and then $\ddot{h}$ as a function of $\theta$ and $z$ (and constants) when the auxiliary system is plugged in the booster.
