@@ -2474,6 +2474,112 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    ## Exact Linearization: Achieving $h^{(4)} = u$
+
+    ### Starting point
+
+    From the previous calculation, differentiating $h^{(3)}$ component by
+    component and substituting $\ddot{z} = v_1$ and $z\ddot{\theta} = v_2$
+    gives:
+
+    $$h^{(4)} = \frac{1}{M}\begin{bmatrix} 2\dot\theta\dot{z}\cos\theta -
+    \dot\theta^2 z\sin\theta \\ 2\dot\theta\dot{z}\sin\theta + \dot\theta^2
+    z\cos\theta \end{bmatrix} + \frac{1}{M}\begin{bmatrix}\sin\theta &
+    \cos\theta \\ -\cos\theta & \sin\theta\end{bmatrix}\begin{bmatrix}v_1 \\
+    v_2\end{bmatrix}$$
+
+    This expression splits into two parts: a state-dependent nonlinear term,
+    and a term that is linear in $v$ through the matrix
+
+    $$P(\theta) = \begin{bmatrix}\sin\theta & \cos\theta \\
+    -\cos\theta & \sin\theta\end{bmatrix} = R\!\left(\theta - \frac{\pi}{2}\right)$$
+
+    ---
+
+    ### An orthonormal basis
+
+    Denote the two columns of $P(\theta)$ by:
+
+    $$e(\theta) = \begin{pmatrix}\sin\theta \\ -\cos\theta\end{pmatrix},
+    \qquad n(\theta) = \begin{pmatrix}\cos\theta \\ \sin\theta\end{pmatrix}$$
+
+    These satisfy:
+
+    $$\|e(\theta)\|^2 = \|n(\theta)\|^2 = 1, \qquad
+    e(\theta)^\top n(\theta) = 0$$
+
+    so $\{e(\theta), n(\theta)\}$ is an orthonormal basis of $\mathbb{R}^2$
+    for all $\theta$. In this basis, $h^{(4)}$ reads:
+
+    $$h^{(4)} = \frac{v_1 - z\dot{\theta}^2}{M}\,e(\theta) +
+    \frac{2\dot{z}\dot{\theta} + v_2}{M}\,n(\theta)$$
+
+    ---
+
+    ### Construction of the outer auxiliary system
+
+    The goal is to find $v = (v_1, v_2)$ as a function of the state and a
+    new input $u = (u_1, u_2) \in \mathbb{R}^2$ such that $h^{(4)} = u$.
+
+    Since $\{e(\theta), n(\theta)\}$ is an orthonormal basis, any
+    $u \in \mathbb{R}^2$ decomposes as:
+
+    $$u = \left(e(\theta)^\top u\right) e(\theta) +
+    \left(n(\theta)^\top u\right) n(\theta)$$
+
+    Identifying coefficients with those in $h^{(4)}$:
+
+    **Along $e(\theta)$:**
+
+    $$\frac{v_1 - z\dot{\theta}^2}{M} = e(\theta)^\top u
+    \implies \boxed{v_1 = M\,e(\theta)^\top u + z\dot{\theta}^2}$$
+
+    **Along $n(\theta)$:**
+
+    $$\frac{2\dot{z}\dot{\theta} + v_2}{M} = n(\theta)^\top u
+    \implies \boxed{v_2 = M\,n(\theta)^\top u - 2\dot{z}\dot{\theta}}$$
+
+    ---
+
+    ### Verification
+
+    Substituting back into the expression for $h^{(4)}$:
+
+    $$h^{(4)} = \frac{M\,e(\theta)^\top u + \cancel{z\dot\theta^2} -
+    \cancel{z\dot\theta^2}}{M}\,e(\theta) +
+    \frac{M\,n(\theta)^\top u - \cancel{2\dot z\dot\theta} +
+    \cancel{2\dot z\dot\theta}}{M}\,n(\theta)$$
+
+    $$= \left(e(\theta)^\top u\right)e(\theta) +
+    \left(n(\theta)^\top u\right)n(\theta) = u \checkmark$$
+
+    The nonlinear terms cancel exactly for all values of
+    $(\theta, \dot\theta, z, \dot z)$.
+
+    ---
+
+    ### Result
+
+    With this choice of $v$, the combined effect of the two auxiliary
+    systems is that the booster dynamics reduce to two decoupled
+    fourth-order integrators:
+
+    $$h_1^{(4)} = u_1, \qquad h_2^{(4)} = u_2$$
+
+    The nonlinear system has been transformed, in terms of the input-output
+    map $u \mapsto h$, into two independent linear chains. Standard linear
+    control methods apply directly from this point.
+
+    > **Note.** The cancellation requires exact knowledge of the state
+    > $(\theta, \dot\theta, z, \dot z)$ at all times, and is only valid
+    > when $z \neq 0$.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## 🧩 State to Derivatives of the Output
 
     Implement a function `Tr` of `x, dx, y, dy, theta, dtheta, z, dz` that returns `h_x, h_y, dh_x, dh_y, d2h_x, d2h_y, d3h_x, d3h_y`.
