@@ -2415,6 +2415,42 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    ## Third and Fourth Derivatives of $h$
+
+    ---
+
+    ### Third derivative $h^{(3)}$
+
+    Differentiating $\ddot{h}$ with respect to time:
+
+    $$\boxed{h^{(3)} = \frac{1}{M}\begin{pmatrix}\cos\theta \\ \sin\theta\end{pmatrix}\dot{\theta}z + \frac{1}{M}\begin{pmatrix}\sin\theta \\ -\cos\theta\end{pmatrix}\dot{z}}$$
+
+    ---
+
+    ### Fourth derivative $h^{(4)}$
+
+    Differentiating $h^{(3)}$ once more and collecting terms:
+
+    $$h^{(4)} = \frac{1}{M}\begin{pmatrix}-\sin\theta\\\cos\theta\end{pmatrix}\dot{\theta}^2 z + \frac{1}{M}\begin{pmatrix}\cos\theta\\\sin\theta\end{pmatrix}\frac{6}{M\ell}(\cos\theta f_x + \sin\theta f_y)z + \frac{2}{M}\begin{pmatrix}\cos\theta\\\sin\theta\end{pmatrix}\dot{\theta}\dot{z} + \frac{1}{M}\begin{pmatrix}\sin\theta\\-\cos\theta\end{pmatrix}v_1$$
+
+    **Plugging in the auxiliary system.** From the second row of the inverted rotation:
+
+    $$\begin{pmatrix}\sin\theta & -\cos\theta \\ \cos\theta & \sin\theta\end{pmatrix}\begin{pmatrix}f_x\\f_y\end{pmatrix} = \begin{pmatrix}z - M\dfrac{\ell}{6}\dot{\theta}^2 \\[8pt] \dfrac{M\ell\, v_2}{6}\end{pmatrix}$$
+
+    we have $\cos\theta f_x + \sin\theta f_y = \dfrac{M\ell\, v_2}{6}$, and therefore $\ddot{\theta} = -v_2$.
+
+    Regrouping the $v_1$, $v_2$ terms using $R\!\left(\theta - \dfrac{\pi}{2}\right) = \begin{pmatrix}\sin\theta & \cos\theta \\ -\cos\theta & \sin\theta\end{pmatrix}$:
+
+    $$\boxed{h^{(4)} = \frac{1}{M}R\!\left(\theta - \frac{\pi}{2}\right)\left(v + \begin{pmatrix}-\dot{\theta}^2 z \\ 2\dot{\theta}\dot{z}\end{pmatrix}\right)}$$
+
+    where $v = (v_1, v_2)^T$.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## 🧩 Exact Linearization
 
     Show that with yet another auxiliary system with input $u=(u_1, u_2)$ and output $v$ fed into the previous one, we can achieve the dynamics
