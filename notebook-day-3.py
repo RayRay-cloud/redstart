@@ -2355,6 +2355,56 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    ## First and Second Derivatives of $h$
+
+    ---
+
+    ### First derivative $\dot{h}$
+
+    Differentiating $h = \begin{pmatrix} x - \frac{\ell}{6}\sin\theta \\[4pt] y + \frac{\ell}{6}\cos\theta \end{pmatrix}$ with respect to time:
+
+    $$\boxed{\dot{h} = \begin{pmatrix} \dot{x} - \dfrac{\ell}{6}\cos\theta\,\dot{\theta} \\[8pt] \dot{y} - \dfrac{\ell}{6}\sin\theta\,\dot{\theta} \end{pmatrix}}$$
+
+    ---
+
+    ### Second derivative $\ddot{h}$
+
+    Differentiating once more:
+
+    $$\ddot{h} = \begin{pmatrix} \ddot{x} - \dfrac{\ell}{6}\cos\theta\,\ddot{\theta} + \dfrac{\ell}{6}\sin\theta\,\dot{\theta}^2 \\[8pt] \ddot{y} - \dfrac{\ell}{6}\sin\theta\,\ddot{\theta} - \dfrac{\ell}{6}\cos\theta\,\dot{\theta}^2 \end{pmatrix}$$
+
+    **Plugging in the equations of motion** ($M = 1$, $J = M\ell^2/12$):
+
+    $$\ddot{x} = \frac{f_x}{M}, \qquad \ddot{y} = \frac{f_y}{M} - g, \qquad \ddot{\theta} = -\frac{6}{M\ell}(f_x\cos\theta + f_y\sin\theta)$$
+
+    the expression factors cleanly as:
+
+    $$\ddot{h} = \frac{1}{M}\begin{pmatrix}\sin\theta \\ -\cos\theta\end{pmatrix} \left(\begin{bmatrix}\sin\theta & -\cos\theta\end{bmatrix}\begin{pmatrix}f_x\\f_y\end{pmatrix} + M\frac{\ell}{6}\dot{\theta}^2\right) - \begin{pmatrix}0\\g\end{pmatrix}$$
+
+    **Plugging in the auxiliary force.** Inverting the rotation in the auxiliary output:
+
+    $$R\!\left(\frac{\pi}{2}-\theta\right)\begin{pmatrix}f_x\\f_y\end{pmatrix} = \begin{pmatrix}\sin\theta & -\cos\theta \\ \cos\theta & \sin\theta\end{pmatrix}\begin{pmatrix}f_x\\f_y\end{pmatrix} = \begin{pmatrix}z - M\dfrac{\ell}{6}\dot{\theta}^2 \\[6pt] \dfrac{M\ell\, v_2}{6}\end{pmatrix}$$
+
+    The first row gives:
+
+    $$\begin{bmatrix}\sin\theta & -\cos\theta\end{bmatrix}\begin{pmatrix}f_x\\f_y\end{pmatrix} = z - M\frac{\ell}{6}\dot{\theta}^2$$
+
+    Substituting back, the $\dot{\theta}^2$ terms cancel exactly:
+
+    $$\frac{1}{M}\begin{pmatrix}\sin\theta \\ -\cos\theta\end{pmatrix}\!\left(z - M\frac{\ell}{6}\dot{\theta}^2 + M\frac{\ell}{6}\dot{\theta}^2\right) = \frac{z}{M}\begin{pmatrix}\sin\theta \\ -\cos\theta\end{pmatrix}$$
+
+    We are left with:
+
+    $$\boxed{\ddot{h} = \begin{pmatrix}\dfrac{z\sin\theta}{M} \\[10pt] -\dfrac{z\cos\theta}{M} - g\end{pmatrix}}$$
+
+    The $\dot{\theta}^2$ nonlinearity is gone. The acceleration of $h$ depends only on $z$ and gravity.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## 🧩 Third and Fourth-Order Derivatives
 
     Compute the third derivative $h^{(3)}$ of $h$ as a function of $\theta$ and $z$ (and constants) and then the fourth derivative $h^{(4)}$ of $h$ with respect to time as a function of $\theta$, $\dot{\theta}$, $z$, $\dot{z}$, $v$ (and constants) when the auxiliary system is on.
