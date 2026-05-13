@@ -2612,7 +2612,7 @@ def _(np):
 
         return h_x, h_y, dh_x, dh_y, d2h_x, d2h_y, d3h_x, d3h_y
 
-    return
+    return (T,)
 
 
 @app.cell(hide_code=True)
@@ -2682,6 +2682,35 @@ def _(M, g, l, np):
 
         return x, dx, y, dy, theta, dtheta, z, dz
 
+    return (T_inv,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Verification de la fonction d'inversion
+    """)
+    return
+
+
+@app.cell
+def _(M, T, T_inv, g, l, np):
+    # Original state
+    state_in = (1.0, 2.0, 3.0, 4.0, 0.1, 0.2, -0.3, -0.4)
+    # x, dx, y, dy, theta, dtheta, z, dz
+
+    # Forward transform: state -> flat output derivatives
+    flat = T(*state_in, l, M, g)
+
+    # Inverse transform: flat output derivatives -> state
+    print("state_in Input:", state_in)
+    state_out = T_inv(*flat)
+    print("T_inv output: ", state_out)
+
+    # Element-wise difference (not set difference)
+    diff = tuple(round(a - b, 10) for a, b in zip(state_in, state_out))
+    print("Difference:   ", diff)
+    print("Match:        ", np.allclose(state_in, state_out))
     return
 
 
@@ -2724,6 +2753,156 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    We are given the starting and end  state and we want to produce a smooth trajectory $t\mapsto (x,\dot x,y,\dot y,\theta,\dot\theta,z,\dot z,f,\varphi)$ connecting them.
+
+
+
+    Using the 8 physical state variables at $t=0$ and $t=t_f$, we apply the forward map $T_r$ to each endpoint:
+    $(x_0,\dot x_0,y_0,\dot y_0,\theta_0,\dot\theta_0,z_0,\dot z_0)
+    \;\xrightarrow{T_r}\;
+    \bigl(h_0,\,\dot h_0,\,\ddot h_0,\,h^{(3)}_0\bigr)$
+    and the same for the final state. This gives 4 output values at each end (for $x$ and $y$), i.e. 8 scalar conditions per component.
+
+
+    Using the 8 boundary conditions we just extracted, we want to find the 8 coefficients $a_0,\ldots,a_7$ of:
+    $$h(t) = a_0 + a_1 t + a_2 t^2 + a_3 t^3 + a_4 t^4 + a_5 t^5 + a_6 t^6 + a_7 t^7$$
+
+
+
+    Evaluating the polynomial and its derivatives at $t=0$ directly gives:
+    $$h(0) = a_0 $$
+    $$h'(0) = a_1 $$
+    $$h''(0) = 2a_2 $$
+    $$h'''(0) = 6a_3 $$
+
+    So we now have $a_0, a_1, a_2, a_3$  .
+
+
+    Substituting the known $a_0,\ldots,a_3$ into $h(t_f)$, $h'(t_f)$, $h''(t_f)$, $h'''(t_f)$ and moving them to the right-hand side gives the $4\times 4$ linear system:
+
+    $$\begin{bmatrix}
+    t_f^4 & t_f^5 & t_f^6 & t_f^7 \\
+    4t_f^3 & 5t_f^4 & 6t_f^5 & 7t_f^6 \\
+    12t_f^2 & 20t_f^3 & 30t_f^4 & 42t_f^5 \\
+    24t_f & 60t_f^2 & 120t_f^3 & 210t_f^4
+    \end{bmatrix}
+    \begin{bmatrix}a_4\\a_5\\a_6\\a_7\end{bmatrix}
+    =
+    \begin{bmatrix}
+    h_f - a_0 - a_1 t_f - a_2 t_f^2 - a_3 t_f^3 \\
+    \dot h_f - a_1 - 2a_2 t_f - 3a_3 t_f^2 \\
+    \ddot h_f - 2a_2 - 6a_3 t_f \\
+    h^{(3)}_f - 6a_3
+    \end{bmatrix}$$
+
+    Solving this system (via `np.linalg.solve`) gives $a_4, a_5, a_6, a_7$.
+
+    We obtain two sets of 8 coefficients, one for $h_x(t)$ and one for $h_y(t)$.
+
+    We will then evaluate the polynomial up to the 4th derivative:
+    $$\bigl(h_x,\dot h_x,\ddot h_x,h_x^{(3)},h_x^{(4)}\bigr), \quad \bigl(h_y,\dot h_y,\ddot h_y,h_y^{(3)},h_y^{(4)}\bigr)$$
+    Then apply $T_r^{-1}$ to the first four orders to recover:
+    $$\bigl(x,\dot x,y,\dot y,\theta,\dot\theta,z,\dot z\bigr)$$
+    The 4th derivative gives the virtual control $u = (h_x^{(4)},\, h_y^{(4)})$.
+
+    Finally, using the state $(\theta,\dot\theta,z,\dot z)$ and virtual control $u$, we compute:
+    Auxiliary virtual input through the exact-linearization law:
+    $$v = M\,R\!\left(\tfrac{\pi}{2}-\theta\right)u + \begin{bmatrix}\dot\theta^2 z\\-2\dot\theta\dot z\end{bmatrix}$$
+
+    Physical force vector from the booster equations:
+    $$\begin{bmatrix}f_x\\f_y\end{bmatrix} = R\!\left(\theta-\tfrac{\pi}{2}\right)\begin{bmatrix}z - \tfrac{\ell}{6}M\dot\theta^2\\[4pt]\tfrac{\ell}{6}M\,v_2/z\end{bmatrix}$$
+
+    f magnitude and phi angle:
+    $$f = \|(f_x,f_y)\|, \qquad \varphi = \mathrm{atan2}(f_x,f_y) - \theta$$
+
+    We now have the complete trajectory n-uplet $(x,\dot x,y,\dot y,\theta,\dot\theta,z,\dot z,f,\varphi)$ at time $t$.
+    """)
+    return
+
+
+@app.cell
+def _(M, T, T_inv, g, l, np):
+    def _poly7_fit(p0, dp0, d2p0, d3p0, pf, dpf, d2pf, d3pf, tf):
+        a0, a1, a2, a3 = p0, dp0, d2p0 / 2.0, d3p0 / 6.0
+        rhs = np.array([
+            pf   - a0 - a1*tf - a2*tf**2 - a3*tf**3,
+            dpf  - a1 - 2*a2*tf - 3*a3*tf**2,
+            d2pf - 2*a2 - 6*a3*tf,
+            d3pf - 6*a3,
+        ])
+        P = np.array([
+            [tf**4,    tf**5,     tf**6,     tf**7    ],
+            [4*tf**3,  5*tf**4,   6*tf**5,   7*tf**6  ],
+            [12*tf**2, 20*tf**3,  30*tf**4,  42*tf**5 ],
+            [24*tf,    60*tf**2,  120*tf**3, 210*tf**4],
+        ])
+        a4, a5, a6, a7 = np.linalg.solve(P, rhs)
+        return a0, a1, a2, a3, a4, a5, a6, a7
+
+    def _poly7_eval(c, t):
+        a0, a1, a2, a3, a4, a5, a6, a7 = c
+        p   = a0 + a1*t + a2*t**2 + a3*t**3 + a4*t**4 + a5*t**5 + a6*t**6 + a7*t**7
+        dp  = a1 + 2*a2*t + 3*a3*t**2 + 4*a4*t**3 + 5*a5*t**4 + 6*a6*t**5 + 7*a7*t**6
+        d2p = 2*a2 + 6*a3*t + 12*a4*t**2 + 20*a5*t**3 + 30*a6*t**4 + 42*a7*t**5
+        d3p = 6*a3 + 24*a4*t + 60*a5*t**2 + 120*a6*t**3 + 210*a7*t**4
+        d4p = 24*a4 + 120*a5*t + 360*a6*t**2 + 840*a7*t**3
+        return p, dp, d2p, d3p, d4p
+
+    def _R(alpha):
+        c, s = np.cos(alpha), np.sin(alpha)
+        return np.array([[c, -s], [s, c]])
+
+    def compute(
+        x_0, dx_0, y_0, dy_0, theta_0, dtheta_0, z_0, dz_0,
+        x_tf, dx_tf, y_tf, dy_tf, theta_tf, dtheta_tf, z_tf, dz_tf,
+        tf,
+    ):
+        # Step 1: map boundary conditions to flat output space
+        h0 = T(x_0, dx_0, y_0, dy_0, theta_0, dtheta_0, z_0, dz_0, l/2, M, g)
+        hf = T(x_tf, dx_tf, y_tf, dy_tf, theta_tf, dtheta_tf, z_tf, dz_tf, l/2, M, g)
+        hx0, hy0, dhx0, dhy0, d2hx0, d2hy0, d3hx0, d3hy0 = h0
+        hxf, hyf, dhxf, dhyf, d2hxf, d2hyf, d3hxf, d3hyf = hf
+
+        # Step 2: degree-7 polynomial interpolation in flat output space
+        cx = _poly7_fit(hx0, dhx0, d2hx0, d3hx0, hxf, dhxf, d2hxf, d3hxf, tf)
+        cy = _poly7_fit(hy0, dhy0, d2hy0, d3hy0, hyf, dhyf, d2hyf, d3hyf, tf)
+
+        def fun(t):
+            t = float(np.clip(t, 0.0, tf))
+
+            # Evaluate flat output trajectory up to 4th derivative
+            hx,  dhx,  d2hx,  d3hx,  d4hx = _poly7_eval(cx, t)
+            hy,  dhy,  d2hy,  d3hy,  d4hy = _poly7_eval(cy, t)
+
+            # Step 3: recover physical state from output derivatives
+            x, dx, y, dy, theta, dtheta, z, dz = T_inv(
+                hx, hy, dhx, dhy, d2hx, d2hy, d3hx, d3hy
+            )
+
+            # Step 4a: virtual input u = h^(4) → auxiliary virtual input v
+            u = np.array([d4hx, d4hy])
+            v = M * _R(np.pi/2 - theta) @ u + np.array([dtheta**2 * z,
+                                                         -2.0 * dtheta * dz])
+            v2 = v[1]
+
+            # Step 4b: physical force from booster equations
+            boost = np.array([z - M * (l/6) * dtheta**2,
+                               M * (l/6) * v2 / z])
+            F = _R(theta - np.pi/2) @ boost
+            fx, fy = F
+            f = np.linalg.norm(F)
+            phi = np.arctan2(fx, fy) - theta
+
+            return x, dx, y, dy, theta, dtheta, z, dz, f, phi
+
+        return fun
+
+    return (compute,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## 🧩 Graphical Validation
 
     Test your `compute` function with
@@ -2734,6 +2913,73 @@ def _(mo):
 
     Make the graph of the relevant variables as a function of time, then make an animation out of the same result. Comment and iterate if necessary!
     """)
+    return
+
+
+@app.cell
+def _(M, compute, g, l, mo, np, plt):
+    def _plots():
+        x_0, dx_0, y_0, dy_0 = 5.0, 0.0, 20.0, -1.0
+        theta_0, dtheta_0, z_0, dz_0 = -np.pi/8, 0.0, -M*g, 0.0
+        x_tf, dx_tf, y_tf, dy_tf = 0.0, 0.0, 2/3*l, 0.0
+        theta_tf, dtheta_tf, z_tf, dz_tf = 0.0, 0.0, -M*g, 0.0
+        tf = 10.0
+
+        fun = compute(
+            x_0, dx_0, y_0, dy_0, theta_0, dtheta_0, z_0, dz_0,
+            x_tf, dx_tf, y_tf, dy_tf, theta_tf, dtheta_tf, z_tf, dz_tf, tf,
+        )
+
+        times = np.linspace(0, tf, 500)
+        data = np.array([fun(t) for t in times])
+        xs, _, ys, _, ths, _, zs, _, fs, phis = data.T
+
+        fig, axes = plt.subplots(2, 3, figsize=(13, 7))
+        fig.suptitle("Trajectoire de landing", fontsize=12)
+        for ax, title, vals in zip(
+            axes.flat,
+            ["x(t)", "y(t)", "θ(t)  [deg]", "z(t)", "f(t) ", "φ(t)  [deg]  "],
+            [xs, ys, np.degrees(ths), zs, fs, np.degrees(phis)],
+        ):
+            ax.plot(times, vals)
+            ax.set_title(title)
+            ax.grid(True)
+        plt.tight_layout()
+        return mo.center(fig)
+
+    _plots()
+    return
+
+
+@app.cell
+def _(M, booster_anim, compute, g, l, mo, np, world):
+    def _anim():
+        x_0, dx_0, y_0, dy_0 = 5.0, 0.0, 20.0, -1.0
+        theta_0, dtheta_0, z_0, dz_0 = -np.pi/8, 0.0, -M*g, 0.0
+        x_tf, dx_tf, y_tf, dy_tf = 0.0, 0.0, 2/3*l, 0.0
+        theta_tf, dtheta_tf, z_tf, dz_tf = 0.0, 0.0, -M*g, 0.0
+        tf = 10.0
+
+        fun = compute(
+            x_0, dx_0, y_0, dy_0, theta_0, dtheta_0, z_0, dz_0,
+            x_tf, dx_tf, y_tf, dy_tf, theta_tf, dtheta_tf, z_tf, dz_tf, tf,
+        )
+
+        return mo.Html(
+            world(
+                [-10, 10, -1, 22],
+                booster_anim(
+                    lambda t: fun(t)[0],
+                    lambda t: fun(t)[2],
+                    lambda t: fun(t)[4],
+                    lambda t: fun(t)[8],
+                    lambda t: fun(t)[9],
+                    T=tf,
+                ),
+            )
+        ).center()
+
+    _anim()
     return
 
 
